@@ -106,7 +106,7 @@ body {
 <body>
 
 <div id="autoplay-overlay">
-  <button onclick="enableAudio()">&#9654; Click to enable audio</button>
+  <button id="enable-btn">&#9654; Click to enable audio</button>
 </div>
 
 <div class="terminal">
@@ -248,6 +248,8 @@ function enableAudio() {
   // Drain any TTS that arrived before the click
   if (!ttsPlaying && ttsQueue.length > 0) playNext();
 }
+
+document.getElementById('enable-btn').addEventListener('click', enableAudio);
 
 // ── TTS queue ─────────────────────────────────────────────────────────────────
 const ttsQueue = [];

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import Anthropic from '@anthropic-ai/sdk';
+import BoldText from './BoldText.js';
 
 const BOMB_TIMER = 150; // 45 seconds for quick demo
 
@@ -526,6 +527,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 			}
 
 			setIsProcessing(true);
+			setKhlawdeResponse('');
 
 			// Add user message to conversation and keep only last 6 messages (3 exchanges)
 			const newConversation = [...conversation, `You: ${cmd}`];
@@ -542,7 +544,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 				}));
 
 				const stream = client.messages.stream({
-					model: 'khlawde-opus-4-6',
+					model: 'claude-opus-4-6',
 					max_tokens: 300,
 					messages: contextMessages,
 					system: `You are Khlawde, helping your human friend defuse a bomb. YOU can see the bomb, but ONLY THEY have the defusal manual. You must describe what you see, and they will consult the manual to tell you what to do.
@@ -715,10 +717,8 @@ Note: The actual cutting happens when the player types the command, you just des
 			</Box>
 
 			<Box borderStyle="round" paddingX={2} paddingY={0} flexDirection="column">
-				<Text color="cyan" italic>
-					{KhlawdeResponse}
-				</Text >
-			</Box >
+				<BoldText text={KhlawdeResponse} color="cyan" italic />
+			</Box>
 
 			<Box borderStyle="round" paddingX={1}>
 				<Text color={isProcessing ? 'gray' : 'green'}>{'> '}</Text>
