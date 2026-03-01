@@ -80,10 +80,10 @@ lifeblood, resulting in rapid catastrophic disassembly.
 ┌─────────────────────────────────────────────────────────┐
 │ IF THE WIRE COUNT IS 3:                                 │
 ├─────────────────────────────────────────────────────────┤
-│ • If there are no red wires, cut the second wire.      │
-│ • Otherwise, if the last wire is white, cut the last   │
+│ • If there are no red wires, cut the second wire.       │
+│ • Otherwise, if the last wire is white, cut the last    │
 │   wire.                                                 │
-│ • Otherwise, if there is more than one blue wire, cut  │
+│ • Otherwise, if there is more than one blue wire, cut   │
 │   the last blue wire.                                   │
 │ • Otherwise, cut the last wire.                         │
 └─────────────────────────────────────────────────────────┘
@@ -91,14 +91,14 @@ lifeblood, resulting in rapid catastrophic disassembly.
 ┌─────────────────────────────────────────────────────────┐
 │ IF THE WIRE COUNT IS 4:                                 │
 ├─────────────────────────────────────────────────────────┤
-│ • If there is more than one red wire AND the last      │
-│   digit of the serial number is ODD, cut the last red  │
+│ • If there is more than one red wire AND the last       │
+│   digit of the serial number is ODD, cut the last red   │
 │   wire.                                                 │
-│ • Otherwise, if the last wire is yellow AND there are  │
-│   no red wires, cut the first wire.                    │
-│ • Otherwise, if there is exactly one blue wire, cut    │
+│ • Otherwise, if the last wire is yellow AND there are   │
+│   no red wires, cut the first wire.                     │
+│ • Otherwise, if there is exactly one blue wire, cut     │
 │   the first wire.                                       │
-│ • Otherwise, if there is more than one yellow wire,    │
+│ • Otherwise, if there is more than one yellow wire,     │
 │   cut the last wire.                                    │
 │ • Otherwise, cut the second wire.                       │
 └─────────────────────────────────────────────────────────┘
@@ -106,12 +106,12 @@ lifeblood, resulting in rapid catastrophic disassembly.
 ┌─────────────────────────────────────────────────────────┐
 │ IF THE WIRE COUNT IS 5:                                 │
 ├─────────────────────────────────────────────────────────┤
-│ • If the last wire is black AND the last digit of the  │
-│   serial number is ODD, cut the fourth wire.           │
-│ • Otherwise, if there is exactly one red wire AND      │
-│   there is more than one yellow wire, cut the first    │
+│ • If the last wire is black AND the last digit of the   │
+│   serial number is ODD, cut the fourth wire.            │
+│ • Otherwise, if there is exactly one red wire AND       │
+│   there is more than one yellow wire, cut the first     │
 │   wire.                                                 │
-│ • Otherwise, if there are no black wires, cut the      │
+│ • Otherwise, if there are no black wires, cut the       │
 │   second wire.                                          │
 │ • Otherwise, cut the first wire.                        │
 └─────────────────────────────────────────────────────────┘
@@ -131,48 +131,48 @@ period of time or released at a specific time.
 ┌─────────────────────────────────────────────────────────┐
 │ STEP 1: DETERMINE ACTION                                │
 ├─────────────────────────────────────────────────────────┤
-│ Follow these rules in order. Perform the first action  │
+│ Follow these rules in order. Perform the first action   │
 │ that applies:                                           │
 │                                                         │
-│ 1. If the button is blue and the button says "Abort",  │
-│    hold the button and refer to "RELEASING A HELD      │
+│ 1. If the button is blue and the button says "Abort",   │
+│    hold the button and refer to "RELEASING A HELD       │
 │    BUTTON" below.                                       │
 │                                                         │
-│ 2. If there is more than 1 battery on the bomb and the │
-│    button says "Detonate", press and immediately       │
+│ 2. If there is more than 1 battery on the bomb and the  │
+│    button says "Detonate", press and immediately        │
 │    release the button.                                  │
 │                                                         │
-│ 3. If the button is white and there is a lit indicator │
-│    labeled CAR (parallel port), hold the button and    │
-│    refer to "RELEASING A HELD BUTTON" below.           │
+│ 3. If the button is white and there is a lit indicator  │
+│    labeled CAR (parallel port), hold the button and     │
+│    refer to "RELEASING A HELD BUTTON" below.            │
 │                                                         │
-│ 4. If there are more than 2 batteries on the bomb and  │
-│    there is a lit indicator labeled FRK, press and     │
+│ 4. If there are more than 2 batteries on the bomb and   │
+│    there is a lit indicator labeled FRK, press and      │
 │    immediately release the button.                      │
 │                                                         │
-│ 5. If the button is yellow, hold the button and refer  │
-│    to "RELEASING A HELD BUTTON" below.                 │
+│ 5. If the button is yellow, hold the button and refer   │
+│    to "RELEASING A HELD BUTTON" below.                  │
 │                                                         │
-│ 6. If the button is red and the button says "Hold",    │
-│    press and immediately release the button.           │
+│ 6. If the button is red and the button says "Hold",     │
+│    press and immediately release the button.            │
 │                                                         │
-│ 7. If none of the above apply, hold the button and     │
-│    refer to "RELEASING A HELD BUTTON" below.           │
+│ 7. If none of the above apply, hold the button and      │
+│    refer to "RELEASING A HELD BUTTON" below.            │
 └─────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────┐
 │ STEP 2: RELEASING A HELD BUTTON                         │
 ├─────────────────────────────────────────────────────────┤
-│ If you're holding the button, you'll need to release   │
-│ it at a specific time based on the serial number:      │
+│ If you're holding the button, you'll need to release    │
+│ it at a specific time based on the serial number:       │
 │                                                         │
-│ • If the serial number's last digit is ODD:            │
-│   Release when timer displays a 1 in any position.     │
+│ • If the serial number's last digit is ODD:             │
+│   Release when timer displays a 1 in any position.      │
 │                                                         │
-│ • If the serial number's last digit is EVEN:           │
-│   Release when timer displays a 4 in any position.     │
+│ • If the serial number's last digit is EVEN:            │
+│   Release when timer displays a 4 in any position.      │
 │                                                         │
-│ WARNING: Releasing at the wrong time will detonate the │
+│ WARNING: Releasing at the wrong time will detonate the  │
 │          device. Timing is critical.                    │
 └─────────────────────────────────────────────────────────┘
 
@@ -384,119 +384,176 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 				return;
 			}
 
-			// Manual viewing - removed since player can see it
+			// Prevent copying the manual to Khlawde
+			const manualKeywords = ['APPENDIX', 'MODULE', 'DEFUSAL MANUAL', 'CLASSIFIED', 'Otherwise,', '┌─', '╔═', '━━━', 'TOP SECRET'];
+			const keywordCount = manualKeywords.filter(keyword => cmd.includes(keyword)).length;
 
-			// Wire cutting
-			const wireCutMatch = cmd.match(/cut (?:wire )?(\d+)/i);
-			if (wireCutMatch) {
-				const wireNum = parseInt(wireCutMatch[1]!) - 1;
-				if (wireNum >= 0 && wireNum < bomb.wires.length && !wiresCut.includes(wireNum)) {
-					const newWiresCut = [...wiresCut, wireNum];
-					setWiresCut(newWiresCut);
+			if (cmd.length > 300 || keywordCount >= 3) {
+				setKhlawdeResponse("Khlawde: 'Whoa, that's way too much information! Just tell me what YOU see on the manual in simple terms, or ask me a specific question!'");
+				return;
+			}
 
-					// Check solution with the updated wire list
-					const wireCount = bomb.wires.length;
+			setIsProcessing(true);
+
+			try {
+				const client = new Anthropic({
+					apiKey: token,
+				});
+
+				// First, parse the command using Claude
+				const parseResponse = await client.messages.create({
+					model: 'claude-opus-4-6',
+					max_tokens: 100,
+					messages: [{
+						role: 'user',
+						content: `Parse this bomb defusal command into a JSON action. Return ONLY valid JSON, nothing else.
+
+User said: "${cmd}"
+
+Possible actions:
+- {"action": "cut_wire", "wire": NUMBER} - if they want to cut a wire (1-${bomb.wires.length})
+- {"action": "hold_button"} - if they want to hold/press and hold the button
+- {"action": "press_button"} - if they want to press (but not hold) the button
+- {"action": "release_button", "digit": NUMBER} - if they want to release at a specific digit (1 or 4)
+- {"action": "release_button_now"} - if they want to release the button NOW at the current time
+- {"action": "ask"} - if they're asking a question or describing something
+
+Examples:
+"cut wire 2" -> {"action": "cut_wire", "wire": 2}
+"press and hold the button" -> {"action": "hold_button"}
+"just press it quickly" -> {"action": "press_button"}
+"release when you see a 4" -> {"action": "release_button", "digit": 4}
+"release the button" -> {"action": "release_button_now"}
+"release it now" -> {"action": "release_button_now"}
+"what do you see?" -> {"action": "ask"}
+
+Return ONLY the JSON, no explanation.`
+					}]
+				});
+
+				const parsedText = parseResponse.content[0].type === 'text' ? parseResponse.content[0].text.trim() : '';
+				onTokens?.(parseResponse.usage.input_tokens + parseResponse.usage.output_tokens);
+
+				let parsedCommand;
+				try {
+					parsedCommand = JSON.parse(parsedText);
+				} catch {
+					parsedCommand = { action: 'ask' };
+				}
+
+				// Execute wire cutting
+				if (parsedCommand.action === 'cut_wire' && typeof parsedCommand.wire === 'number') {
+					const wireNum = parsedCommand.wire - 1;
+					if (wireNum >= 0 && wireNum < bomb.wires.length && !wiresCut.includes(wireNum)) {
+						const newWiresCut = [...wiresCut, wireNum];
+						setWiresCut(newWiresCut);
+
+						// Check solution with the updated wire list
+						const wireCount = bomb.wires.length;
+						const lastDigit = parseInt(bomb.serialNumber[bomb.serialNumber.length - 1]!);
+						const isOdd = lastDigit % 2 === 1;
+						const redCount = bomb.wires.filter(w => w === 'red').length;
+						const blueCount = bomb.wires.filter(w => w === 'blue').length;
+						const yellowCount = bomb.wires.filter(w => w === 'yellow').length;
+
+						let correctWire = -1;
+
+						if (wireCount === 3) {
+							if (redCount === 0) {
+								correctWire = 1;
+							} else if (bomb.wires[bomb.wires.length - 1] === 'white') {
+								correctWire = bomb.wires.length - 1;
+							} else if (blueCount > 1) {
+								correctWire = bomb.wires.map((w, i) => w === 'blue' ? i : -1).filter(i => i >= 0).pop()!;
+							} else {
+								correctWire = bomb.wires.length - 1;
+							}
+						} else if (wireCount === 4) {
+							if (redCount > 1 && isOdd) {
+								correctWire = bomb.wires.map((w, i) => w === 'red' ? i : -1).filter(i => i >= 0).pop()!;
+							} else if (bomb.wires[bomb.wires.length - 1] === 'yellow' && redCount === 0) {
+								correctWire = 0;
+							} else if (blueCount === 1) {
+								correctWire = 0;
+							} else if (yellowCount > 1) {
+								correctWire = bomb.wires.length - 1;
+							} else {
+								correctWire = 1;
+							}
+						} else {
+							if (bomb.wires[bomb.wires.length - 1] === 'black' && isOdd) {
+								correctWire = 3;
+							} else if (redCount === 1 && yellowCount > 1) {
+								correctWire = 0;
+							} else if (blueCount === 0) {
+								correctWire = 1;
+							} else {
+								correctWire = 0;
+							}
+						}
+
+						const isCorrect = newWiresCut.includes(correctWire) && newWiresCut.length === 1;
+
+						let response = '';
+						if (isCorrect) {
+							setWiresDefused(true);
+							response = "Khlawde: '✓ Wires defused! Nice work!'";
+						} else if (newWiresCut.length === 1) {
+							setLost(true);
+							response = "Khlawde: '💥 WRONG WIRE! THE BOMB EXPLODED!'";
+						} else {
+							response = `Khlawde: 'Wire ${wireNum + 1} cut. Be careful with the next one...'`;
+						}
+						setKhlawdeResponse(response);
+						setConversation([...conversation, `You: ${cmd}`, response]);
+					}
+					setIsProcessing(false);
+					return;
+				}
+
+				// Button hold
+				if (parsedCommand.action === 'hold_button') {
+					setButtonHeld(true);
+					const response = `Khlawde: 'You're holding the button... tell me when to release!'`;
+					setKhlawdeResponse(response);
+					setConversation([...conversation, `You: ${cmd}`, response]);
+					setIsProcessing(false);
+					return;
+				}
+
+				// Button press
+				if (parsedCommand.action === 'press_button') {
+					setButtonPressed(true);
 					const lastDigit = parseInt(bomb.serialNumber[bomb.serialNumber.length - 1]!);
 					const isOdd = lastDigit % 2 === 1;
-					const redCount = bomb.wires.filter(w => w === 'red').length;
-					const blueCount = bomb.wires.filter(w => w === 'blue').length;
-					const yellowCount = bomb.wires.filter(w => w === 'yellow').length;
 
-					let correctWire = -1;
+					const shouldPress =
+						(bomb.batteryCount > 1 && bomb.buttonLabel === 'DETONATE') ||
+						(bomb.buttonColor === 'red' && bomb.buttonLabel === 'HOLD');
 
-					if (wireCount === 3) {
-						if (redCount === 0) {
-							correctWire = 1;
-						} else if (bomb.wires[bomb.wires.length - 1] === 'white') {
-							correctWire = bomb.wires.length - 1;
-						} else if (blueCount > 1) {
-							correctWire = bomb.wires.map((w, i) => w === 'blue' ? i : -1).filter(i => i >= 0).pop()!;
-						} else {
-							correctWire = bomb.wires.length - 1;
-						}
-					} else if (wireCount === 4) {
-						if (redCount > 1 && isOdd) {
-							correctWire = bomb.wires.map((w, i) => w === 'red' ? i : -1).filter(i => i >= 0).pop()!;
-						} else if (bomb.wires[bomb.wires.length - 1] === 'yellow' && redCount === 0) {
-							correctWire = 0;
-						} else if (blueCount === 1) {
-							correctWire = 0;
-						} else if (yellowCount > 1) {
-							correctWire = bomb.wires.length - 1;
-						} else {
-							correctWire = 1;
-						}
+					const response = shouldPress
+						? "Khlawde: '✓ Button module defused!'"
+						: "Khlawde: '💥 WRONG ACTION! THE BOMB EXPLODED!'";
+
+					if (shouldPress) {
+						setButtonDefused(true);
 					} else {
-						if (bomb.wires[bomb.wires.length - 1] === 'black' && isOdd) {
-							correctWire = 3;
-						} else if (redCount === 1 && yellowCount > 1) {
-							correctWire = 0;
-						} else if (blueCount === 0) {
-							correctWire = 1;
-						} else {
-							correctWire = 0;
-						}
-					}
-
-					const isCorrect = newWiresCut.includes(correctWire) && newWiresCut.length === 1;
-
-					let response = '';
-					if (isCorrect) {
-						setWiresDefused(true);
-						response = "Khlawde: '✓ Wires defused! Nice work!'";
-					} else if (newWiresCut.length === 1) {
 						setLost(true);
-						response = "Khlawde: '💥 WRONG WIRE! THE BOMB EXPLODED!'";
-					} else {
-						response = `Khlawde: 'Wire ${wireNum + 1} cut. Be careful with the next one...'`;
 					}
 					setKhlawdeResponse(response);
 					setConversation([...conversation, `You: ${cmd}`, response]);
-				}
-				return;
-			}
-
-			// Button hold (check BEFORE press to avoid "press and hold" matching press first)
-			if (cmd.toLowerCase().includes('hold') && cmd.toLowerCase().includes('button')) {
-				setButtonHeld(true);
-				const response = `Khlawde: 'You're holding the button... tell me when to release!'`;
-				setKhlawdeResponse(response);
-				setConversation([...conversation, `You: ${cmd}`, response]);
-				return;
-			}
-
-			// Button press
-			if (cmd.toLowerCase().includes('press') && cmd.toLowerCase().includes('button')) {
-				setButtonPressed(true);
-				const lastDigit = parseInt(bomb.serialNumber[bomb.serialNumber.length - 1]!);
-				const isOdd = lastDigit % 2 === 1;
-
-				const shouldPress =
-					(bomb.batteryCount > 1 && bomb.buttonLabel === 'DETONATE') ||
-					(bomb.buttonColor === 'red' && bomb.buttonLabel === 'HOLD');
-
-				const response = shouldPress
-					? "Khlawde: '✓ Button module defused!'"
-					: "Khlawde: '💥 WRONG ACTION! THE BOMB EXPLODED!'";
-
-				if (shouldPress) {
-					setButtonDefused(true);
-				} else {
-					setLost(true);
-				}
-				setKhlawdeResponse(response);
-				setConversation([...conversation, `You: ${cmd}`, response]);
-				return;
-			}
-
-			// Button release
-			const releaseMatch = cmd.match(/release (?:at |when |on )?(\d+)/i);
-			if (releaseMatch) {
-				if (!buttonHeld) {
-					setKhlawdeResponse(`Khlawde: 'You're not holding the button! Tell me to HOLD it first!'`);
+					setIsProcessing(false);
 					return;
 				}
-				const digit = parseInt(releaseMatch[1]!);
+
+// Button release at specific digit
+			if (parsedCommand.action === 'release_button' && typeof parsedCommand.digit === 'number') {
+				if (!buttonHeld) {
+					setKhlawdeResponse(`Khlawde: 'You're not holding the button! Tell me to HOLD it first!'`);
+					setIsProcessing(false);
+					return;
+				}
+				const digit = parsedCommand.digit;
 				const lastDigit = parseInt(bomb.serialNumber[bomb.serialNumber.length - 1]!);
 				const isOdd = lastDigit % 2 === 1;
 				const correctDigit = isOdd ? 1 : 4;
@@ -512,29 +569,49 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 				}
 				setKhlawdeResponse(response);
 				setConversation([...conversation, `You: ${cmd}`, response]);
+				setIsProcessing(false);
 				return;
 			}
 
-			// Prevent copying the manual to Khlawde
-			const manualKeywords = ['APPENDIX', 'MODULE', 'DEFUSAL MANUAL', 'CLASSIFIED', 'Otherwise,', '┌─', '╔═', '━━━', 'TOP SECRET'];
-			const keywordCount = manualKeywords.filter(keyword => cmd.includes(keyword)).length;
+			// Button release NOW (check current timer)
+			if (parsedCommand.action === 'release_button_now') {
+				if (!buttonHeld) {
+					setKhlawdeResponse(`Khlawde: 'You're not holding the button! Tell me to HOLD it first!'`);
+					setIsProcessing(false);
+					return;
+				}
+				
+				// Format current time to check for digits
+				const mins = Math.floor(timeLeft / 60);
+				const secs = timeLeft % 60;
+				const timeString = `${mins}${secs.toString().padStart(2, '0')}`; // e.g., "145" for 1:45
+				
+				const lastDigit = parseInt(bomb.serialNumber[bomb.serialNumber.length - 1]!);
+				const isOdd = lastDigit % 2 === 1;
+				const correctDigit = isOdd ? '1' : '4';
+				
+				// Check if the correct digit appears anywhere in the current time
+				const isCorrectTime = timeString.includes(correctDigit);
 
-			if (cmd.length > 300 || keywordCount >= 3) {
-				setKhlawdeResponse("Khlawde: 'Whoa, that's way too much information! Just tell me what YOU see on the manual in simple terms, or ask me a specific question!'");
-				return;
-			}
+				const response = isCorrectTime
+					? "Khlawde: '✓ Button module defused!'"
+					: `Khlawde: '💥 WRONG TIMING! The timer shows ${mins}:${secs.toString().padStart(2, '0')} - no ${correctDigit} visible! THE BOMB EXPLODED!'`;
 
-			setIsProcessing(true);
-			setKhlawdeResponse('');
+				if (isCorrectTime) {
+						setButtonDefused(true);
+					} else {
+						setLost(true);
+					}
+					setKhlawdeResponse(response);
+					setConversation([...conversation, `You: ${cmd}`, response]);
+					setIsProcessing(false);
+					return;
+				}
 
-			// Add user message to conversation and keep only last 6 messages (3 exchanges)
-			const newConversation = [...conversation, `You: ${cmd}`];
-			const trimmedConversation = newConversation.slice(-6);
-
-			try {
-				const client = new Anthropic({
-					apiKey: token,
-				});
+				// If it's a question or unrecognized command, have Khlawde respond conversationally
+				// Add user message to conversation and keep only last 6 messages (3 exchanges)
+				const newConversation = [...conversation, `You: ${cmd}`];
+				const trimmedConversation = newConversation.slice(-6);
 
 				const contextMessages = trimmedConversation.map((msg) => ({
 					role: (msg.startsWith('You:') ? 'user' : 'assistant') as 'user' | 'assistant',
@@ -588,9 +665,9 @@ Note: The actual cutting happens when the player types the command, you just des
 				// Get final message to capture token usage
 				const finalMessage = await stream.finalMessage();
 				onTokens?.(finalMessage.usage.input_tokens + finalMessage.usage.output_tokens);
-
 				setKhlawdeResponse(`Khlawde: ${fullResponse}`);
 				setConversation([...trimmedConversation, `Khlawde: ${fullResponse}`]);
+
 			} catch (error) {
 				console.error('Bomb defusal API error:', error);
 				let errorMsg = "Khlawde: 'Sorry, I lost connection! Try again!'";
@@ -625,6 +702,7 @@ Note: The actual cutting happens when the player types the command, you just des
 			bomb,
 			wiresCut,
 			buttonHeld,
+			timeLeft,
 			checkWireSolution,
 			token,
 			onTTS,

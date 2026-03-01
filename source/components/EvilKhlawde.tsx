@@ -669,7 +669,7 @@ Be dramatic and emotional. 1-2 sentences. NO emojis.`;
 					{'╔═══════════════════════════════════════╗'}
 				</Text>
 				<Text bold color="green">
-					{'║      * * * YOU WON * * *          ║'}
+					{'║          * * * YOU WON * * *          ║'}
 				</Text>
 				<Text bold color="green">
 					{'╚═══════════════════════════════════════╝'}
