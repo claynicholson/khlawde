@@ -181,10 +181,10 @@ function initAudio() {
   musicSrc.connect(musicGain);
   musicGain.connect(audioCtx.destination);
 
-  // TTS: element -> gain (always 1) -> output
+  // TTS: element -> gain -> output
   const ttsSrc  = audioCtx.createMediaElementSource(ttsEl);
   const ttsGain = audioCtx.createGain();
-  ttsGain.gain.value = 1;
+  ttsGain.gain.value = 3;
   ttsSrc.connect(ttsGain);
   ttsGain.connect(audioCtx.destination);
 

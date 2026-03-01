@@ -111,7 +111,7 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 			.replace(/\s+/g, ' ')                      // collapse whitespace
 			.trim();
 		const truncated = cleaned.slice(0, 280);
-		const ttsUrl = `http://tts.cyzon.us/tts?text=${encodeURIComponent(truncated)}`;
+		const ttsUrl = `https://tts.cyzon.us/tts?text=${encodeURIComponent(truncated)}`;
 		try {
 			await fetch(`http://localhost:${audioPort}/push`, {
 				method: 'POST',

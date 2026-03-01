@@ -34,7 +34,7 @@ app.use(helmet({
 			styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
 			fontSrc: ["'self'", "https://fonts.gstatic.com"],
 			connectSrc: ["'self'", "https://khlawde.notaroomba.dev", "wss://khlawde.notaroomba.dev"],
-			mediaSrc: ["'self'", "http://tts.cyzon.us"],
+			mediaSrc: ["'self'", "https://tts.cyzon.us"],
 			imgSrc: ["'self'", "data:"],
 		},
 	},
