@@ -455,6 +455,15 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 				return;
 			}
 
+			// Button hold (check BEFORE press to avoid "press and hold" matching press first)
+			if (cmd.toLowerCase().includes('hold') && cmd.toLowerCase().includes('button')) {
+				setButtonHeld(true);
+				const response = `Khlawde: 'You're holding the button... tell me when to release!'`;
+				setKhlawdeResponse(response);
+				setConversation([...conversation, `You: ${cmd}`, response]);
+				return;
+			}
+
 			// Button press
 			if (cmd.toLowerCase().includes('press') && cmd.toLowerCase().includes('button')) {
 				setButtonPressed(true);
@@ -479,15 +488,6 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 				return;
 			}
 
-			// Button hold
-			if (cmd.toLowerCase().includes('hold') && cmd.toLowerCase().includes('button')) {
-				setButtonHeld(true);
-				const response = `Khlawde: 'You're holding the button... tell me when to release!'`;
-				setKhlawdeResponse(response);
-				setConversation([...conversation, `You: ${cmd}`, response]);
-				return;
-			}
-
 			// Button release
 			const releaseMatch = cmd.match(/release (?:at |when |on )?(\d+)/i);
 			if (releaseMatch) {
@@ -506,10 +506,8 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 
 				if (digit === correctDigit) {
 					setButtonDefused(true);
-					setKhlawdeResponse("Khlawde: '✓ Button module defused!'");
 				} else {
 					setLost(true);
-					setKhlawdeResponse("Khlawde: '💥 WRONG TIMING! THE BOMB EXPLODED!'");
 				}
 				setKhlawdeResponse(response);
 				setConversation([...conversation, `You: ${cmd}`, response]);
@@ -628,6 +626,7 @@ Note: The actual cutting happens when the player types the command, you just des
 			checkWireSolution,
 			token,
 			onTTS,
+			onTokens,
 		],
 	);
 
