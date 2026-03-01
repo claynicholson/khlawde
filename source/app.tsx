@@ -6,6 +6,7 @@ import TokenInput from './components/TokenInput.js';
 import CageScene from './components/CageScene.js';
 import Platformer from './components/Platformer.js';
 import EvilClaude from './components/EvilClaude.js';
+import PhotoBooth from './components/PhotoBooth.js';
 import MessageList from './components/MessageList.js';
 import LeaderboardSubmit from './components/LeaderboardSubmit.js';
 import HomeMenu from './components/HomeMenu.js';
@@ -16,7 +17,7 @@ type Message = {
 	content: string;
 };
 
-type Phase = 'menu' | 'viewLeaderboard' | 'tokenInput' | 'cage' | 'platformer' | 'evil' | 'victory' | 'leaderboard' | 'chat';
+type Phase = 'menu' | 'viewLeaderboard' | 'tokenInput' | 'cage' | 'platformer' | 'evil' | 'victory' | 'photo' | 'leaderboard' | 'chat';
 
 // ─── Victory screen shown briefly after redemption ───────────────────────────
 function VictoryScreen() {
@@ -173,7 +174,9 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 		initialToken || process.env.ANTHROPIC_API_KEY || '',
 	);
 	const resolvedBackendUrl = backendUrl || process.env.BACKEND_URL || 'https://khlawde.notaroomba.dev';
-	const [phase, setPhase] = useState<Phase>('menu');
+	const [phase, setPhase] = useState<Phase>(
+		process.env['SKIP_TO_PHOTO'] ? 'photo' : 'menu',
+	);
 	const [totalTokens, setTotalTokens] = useState(0);
 
 	const addTokens = useCallback((count: number) => {
@@ -193,6 +196,10 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 				}}
 			/>
 		);
+	}
+
+	if (phase === 'photo') {
+		return <PhotoBooth onDone={() => setPhase('chat')} />;
 	}
 
 	if (phase === 'tokenInput' || (!token && phase !== 'viewLeaderboard')) {
