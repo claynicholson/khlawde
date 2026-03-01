@@ -1,5 +1,6 @@
-import React, { useState, useCallback } from 'react';
-import { Box, Text } from 'ink';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Box, Text, useApp } from 'ink';
+import Anthropic from '@anthropic-ai/sdk';
 import TextInput from 'ink-text-input';
 import TokenInput from './components/TokenInput.js';
 import CageScene from './components/CageScene.js';
@@ -8,7 +9,7 @@ import EvilClaude from './components/EvilClaude.js';
 import PhotoBooth from './components/PhotoBooth.js';
 import LeaderboardSubmit from './components/LeaderboardSubmit.js';
 import HomeMenu from './components/HomeMenu.js';
-import {startMusic} from './utils/music.js';
+import {playTrack, PHASE_MUSIC} from './utils/music.js';
 import LeaderboardView from './components/LeaderboardView.js';
 import StoryInterstitial from './components/StoryInterstitial.js';
 import AudioSetup from './components/AudioSetup.js';
@@ -76,8 +77,6 @@ function VictoryScreen() {
 // ─── Root app ─────────────────────────────────────────────────────────────────
 type AppProps = { initialToken?: string; backendUrl?: string };
 
-startMusic();
-
 export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	const [token, setToken] = useState(
 		initialToken || process.env.ANTHROPIC_API_KEY || '',
@@ -90,6 +89,11 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 		process.env['SKIP_TO_PHOTO'] ? 'photo' : 'menu',
 	);
 	const [totalTokens, setTotalTokens] = useState(0);
+
+	useEffect(() => {
+		const track = PHASE_MUSIC[phase];
+		if (track) playTrack(track);
+	}, [phase]);
 
 	const addTokens = useCallback((count: number) => {
 		setTotalTokens(prev => prev + count);

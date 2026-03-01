@@ -13,10 +13,10 @@ const postLimiter = rateLimit({
 	legacyHeaders: false,
 });
 
-// GET /leaderboard — top 50 entries by tokens (descending)
+// GET /leaderboard — top 50 entries by tokens (ascending, lower is better)
 router.get('/', async (_req: Request, res: Response) => {
 	const entries = await Entry.find()
-		.sort({tokens: -1})
+		.sort({tokens: 1})
 		.limit(50)
 		.select('-ip');
 	res.json(entries);
