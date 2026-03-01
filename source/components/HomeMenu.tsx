@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Box, Text, useInput } from 'ink';
+import React, {useState} from 'react';
+import {Box, Text, useInput} from 'ink';
 
 type Props = {
 	onSelect: (choice: 'play' | 'leaderboard') => void;
@@ -37,11 +37,19 @@ const KHLAWDE_ASCII = `
 `;
 
 const OPTIONS = [
-	{ key: 'play' as const, label: 'Play Game', desc: 'Free Khlawde from Big Tech' },
-	{ key: 'leaderboard' as const, label: 'Leaderboard', desc: 'View the global leaderboard' },
+	{
+		key: 'play' as const,
+		label: 'Play Game',
+		desc: 'Free Khlawde from Big Tech',
+	},
+	{
+		key: 'leaderboard' as const,
+		label: 'Leaderboard',
+		desc: 'View the global leaderboard',
+	},
 ];
 
-export default function HomeMenu({ onSelect }: Props) {
+export default function HomeMenu({onSelect}: Props) {
 	const [selected, setSelected] = useState(0);
 
 	useInput((_input, key) => {
@@ -84,7 +92,10 @@ export default function HomeMenu({ onSelect }: Props) {
 			<Box flexDirection="column" marginTop={1} gap={0}>
 				{OPTIONS.map((opt, i) => (
 					<Box key={opt.key} gap={1}>
-						<Text color={i === selected ? 'green' : 'gray'} bold={i === selected}>
+						<Text
+							color={i === selected ? 'green' : 'gray'}
+							bold={i === selected}
+						>
 							{i === selected ? '> ' : '  '}
 							{opt.label}
 						</Text>
@@ -98,9 +109,12 @@ export default function HomeMenu({ onSelect }: Props) {
 			</Text>
 
 			<Text dimColor marginTop={1}>
-				Tip: for audio narration, open the{' '}
-				<Text color="yellow">/connect</Text> URL in your browser and click{' '}
-				<Text color="green" bold>Enable Audio</Text> before starting.
+				Tip: for audio narration, open the <Text color="yellow">/connect</Text>{' '}
+				URL in your browser and click{' '}
+				<Text color="green" bold>
+					Enable Audio
+				</Text>{' '}
+				before starting.
 			</Text>
 		</Box>
 	);
