@@ -1,6 +1,8 @@
 import ssh2 from 'ssh2';
-import { readFileSync, existsSync, writeFileSync } from 'fs';
+import { readFileSync, existsSync, writeFileSync, createReadStream } from 'fs';
 import { execSync } from 'child_process';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import pty from 'node-pty';
 import http from 'http';
 import { WebSocketServer } from 'ws';
@@ -27,10 +29,12 @@ function generateCode(): string {
 	return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-const LISTEN_HTML = readFileSync(
-	new URL('../../frontend/listen.html', import.meta.url),
-	'utf8',
-);
+const __dir = dirname(fileURLToPath(import.meta.url));
+// In source/: resolves to source/../frontend = project root/frontend
+// In dist/:   resolves to dist/../frontend  = project root/frontend
+const LISTEN_HTML = readFileSync(join(__dir, '..', 'frontend', 'listen.html'), 'utf8');
+// Music file lives beside this file in assets/ (same pattern as utils/music.ts)
+const MUSIC_PATH = join(__dir, 'assets', 'Spear of Justice.mp3');
 
 // ─── HTTP + WebSocket server ───────────────────────────────────────────────────
 
@@ -40,6 +44,17 @@ const httpServer = http.createServer((req, res) => {
 	if (url.pathname === '/listen' && req.method === 'GET') {
 		res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
 		res.end(LISTEN_HTML);
+		return;
+	}
+
+	if (url.pathname === '/assets/music.mp3' && req.method === 'GET') {
+		if (!existsSync(MUSIC_PATH)) {
+			res.writeHead(404).end('Not found');
+			return;
+		}
+
+		res.writeHead(200, { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'public, max-age=86400' });
+		createReadStream(MUSIC_PATH).pipe(res);
 		return;
 	}
 

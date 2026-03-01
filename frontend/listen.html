@@ -39,10 +39,10 @@ body {
   align-items: center;
   gap: 0.5rem;
 }
-.status.waiting { color: #ffff00; border-color: #ffff00; }
-.status.connected { color: #00ff41; border-color: #00ff41; }
-.status.playing { color: #00ffff; border-color: #00ffff; }
-.status.error { color: #ff4141; border-color: #ff4141; }
+.status.waiting  { color: #ffff00; border-color: #ffff00; }
+.status.connected{ color: #00ff41; border-color: #00ff41; }
+.status.playing  { color: #00ffff; border-color: #00ffff; }
+.status.error    { color: #ff4141; border-color: #ff4141; }
 .code { color: #888; margin-bottom: 1rem; font-size: 0.85rem; }
 .hint { color: #555; font-size: 0.8rem; margin-top: 1rem; }
 .log {
@@ -57,27 +57,90 @@ body {
 .log-entry { margin-bottom: 0.2rem; }
 .blink { animation: blink 1s step-end infinite; }
 @keyframes blink { 50% { opacity: 0; } }
+
+/* Autoplay unblock overlay */
+#autoplay-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+#autoplay-overlay button {
+  background: #0a0a0a;
+  color: #00ff41;
+  border: 1px solid #00ff41;
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 1rem 2.5rem;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+}
+#autoplay-overlay button:hover { background: #00ff41; color: #0a0a0a; }
+
+/* Music volume indicator */
+.vol-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: #333;
+}
+.vol-track {
+  flex: 1;
+  height: 3px;
+  background: #1a1a1a;
+  position: relative;
+}
+.vol-fill {
+  height: 100%;
+  background: #00ff41;
+  width: 100%;
+  transition: width 0.1s linear;
+}
 </style>
 </head>
 <body>
+
+<div id="autoplay-overlay">
+  <button onclick="enableAudio()">&#9654; Click to enable audio</button>
+</div>
+
 <div class="terminal">
   <div class="title">[ KHLAWDE :: AUDIO STREAM ]</div>
+
   <div class="status waiting" id="status">
     <span class="blink">&#9646;</span>&nbsp;Connecting to server...
   </div>
+
   <div class="code" id="code-display"></div>
+
+  <div class="vol-bar">
+    <span>&#9836; music</span>
+    <div class="vol-track"><div class="vol-fill" id="vol-fill"></div></div>
+  </div>
+
   <div class="hint" id="hint"></div>
-  <audio id="audio"></audio>
   <div class="log" id="log"></div>
 </div>
+
+<!-- Hidden audio elements — routed through Web Audio API -->
+<audio id="music" loop crossorigin="anonymous"></audio>
+<audio id="tts" crossorigin="anonymous"></audio>
+
 <script>
-const params = new URLSearchParams(location.search);
-const code = params.get('code');
+const params   = new URLSearchParams(location.search);
+const code     = params.get('code');
 const statusEl = document.getElementById('status');
-const logEl = document.getElementById('log');
-const codeEl = document.getElementById('code-display');
-const hintEl = document.getElementById('hint');
-const audio = document.getElementById('audio');
+const logEl    = document.getElementById('log');
+const codeEl   = document.getElementById('code-display');
+const hintEl   = document.getElementById('hint');
+const volFill  = document.getElementById('vol-fill');
+const musicEl  = document.getElementById('music');
+const ttsEl    = document.getElementById('tts');
 
 if (code) {
   codeEl.textContent = 'session: ' + code;
@@ -85,6 +148,7 @@ if (code) {
   setStatus('error', '&times; No session code. Open this URL from the SSH terminal.');
 }
 
+// ── Logging ──────────────────────────────────────────────────────────────────
 function log(msg) {
   const e = document.createElement('div');
   e.className = 'log-entry';
@@ -98,13 +162,85 @@ function setStatus(cls, html) {
   statusEl.innerHTML = html;
 }
 
-audio.addEventListener('play', () => {
-  setStatus('playing', '&#9654; Playing audio...');
-});
-audio.addEventListener('ended', () => {
-  setStatus('connected', '&#9679; Ready &mdash; listening for Claude...');
+// ── Web Audio API setup ───────────────────────────────────────────────────────
+const AC = window.AudioContext || window.webkitAudioContext;
+let audioCtx  = null;
+let musicGain = null;
+let audioReady = false;
+
+function initAudio() {
+  if (audioReady) return;
+  audioReady = true;
+
+  audioCtx = new AC();
+
+  // Music: element -> gain -> output
+  const musicSrc = audioCtx.createMediaElementSource(musicEl);
+  musicGain = audioCtx.createGain();
+  musicGain.gain.value = 1;
+  musicSrc.connect(musicGain);
+  musicGain.connect(audioCtx.destination);
+
+  // TTS: element -> gain (always 1) -> output
+  const ttsSrc  = audioCtx.createMediaElementSource(ttsEl);
+  const ttsGain = audioCtx.createGain();
+  ttsGain.gain.value = 1;
+  ttsSrc.connect(ttsGain);
+  ttsGain.connect(audioCtx.destination);
+
+  // Mirror music gain value onto the volume bar every ~80 ms
+  setInterval(() => {
+    if (musicGain) {
+      volFill.style.width = (musicGain.gain.value * 100).toFixed(1) + '%';
+    }
+  }, 80);
+}
+
+function duck() {
+  if (!audioCtx || !musicGain) return;
+  const t = audioCtx.currentTime;
+  musicGain.gain.cancelScheduledValues(t);
+  musicGain.gain.setValueAtTime(musicGain.gain.value, t);
+  // Exponential ramp — sounds more natural than linear
+  musicGain.gain.exponentialRampToValueAtTime(0.10, t + 0.35);
+}
+
+function unduck() {
+  if (!audioCtx || !musicGain) return;
+  const t = audioCtx.currentTime;
+  musicGain.gain.cancelScheduledValues(t);
+  musicGain.gain.setValueAtTime(musicGain.gain.value, t);
+  musicGain.gain.exponentialRampToValueAtTime(1.0, t + 0.8);
+}
+
+// ── Music playback ────────────────────────────────────────────────────────────
+function startMusic() {
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  musicEl.src = '/assets/music.mp3';
+  musicEl.play().catch(() => {
+    document.getElementById('autoplay-overlay').style.display = 'flex';
+  });
+}
+
+function enableAudio() {
+  document.getElementById('autoplay-overlay').style.display = 'none';
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  musicEl.play().catch(() => {});
+}
+
+// ── TTS events ────────────────────────────────────────────────────────────────
+ttsEl.addEventListener('play', () => {
+  duck();
+  setStatus('playing', '&#9654;&nbsp;Claude is speaking...');
 });
 
+ttsEl.addEventListener('ended', () => {
+  unduck();
+  setStatus('connected', '&#9679;&nbsp;Ready &mdash; listening for Claude...');
+});
+
+// ── WebSocket ─────────────────────────────────────────────────────────────────
 function connect() {
   if (!code) return;
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -120,13 +256,15 @@ function connect() {
     try {
       const msg = JSON.parse(e.data);
       if (msg.type === 'ready') {
-        setStatus('connected', '&#9679; Ready &mdash; listening for Claude...');
+        setStatus('connected', '&#9679;&nbsp;Ready &mdash; listening for Claude...');
         hintEl.textContent = 'Audio will play automatically when Claude speaks.';
-        log('SSH session linked');
+        log('SSH session linked — starting music');
+        startMusic();
       } else if (msg.type === 'tts') {
-        log('TTS: ' + decodeURIComponent(msg.url.split('text=')[1] || '').slice(0, 60));
-        audio.src = msg.url;
-        audio.play().catch(err => log('play error: ' + err.message));
+        const text = decodeURIComponent(msg.url.split('text=')[1] || '').slice(0, 60);
+        log('TTS: ' + text);
+        ttsEl.src = msg.url;
+        ttsEl.play().catch(err => log('tts play error: ' + err.message));
       }
     } catch (err) {
       log('parse error: ' + err.message);
