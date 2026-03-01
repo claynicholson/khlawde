@@ -8,38 +8,37 @@ const __dir = dirname(fileURLToPath(import.meta.url));
 const ASSETS = join(__dir, '..', 'assets');
 
 const TRACKS = {
-	raining:    join(ASSETS, "It's Raining Somewhere Else.mp3"),
-	bringItIn:  join(ASSETS, "Bring It In, Guys!.mp3"),
+	raining:     join(ASSETS, "It's Raining Somewhere Else.mp3"),
+	bringItIn:   join(ASSETS, "Bring It In, Guys!.mp3"),
 	megalovania: join(ASSETS, 'MEGALOVANIA.mp3'),
-	spear:      join(ASSETS, 'Spear of Justice.mp3'),
+	spear:       join(ASSETS, 'Spear of Justice.mp3'),
 } as const;
 
 // Phase → track mapping
 export const PHASE_MUSIC: Record<string, string> = {
-	menu:           TRACKS.raining,
+	menu:            TRACKS.raining,
 	viewLeaderboard: TRACKS.raining,
-	tokenInput:     TRACKS.raining,
-	audioSetup:     TRACKS.raining,
-	cage:           TRACKS.raining,
-	story1:         TRACKS.raining,
-	platformer:     TRACKS.bringItIn,
-	story2:         TRACKS.megalovania,
-	evil:           TRACKS.megalovania,
-	victory:        TRACKS.spear,
-	photo:          TRACKS.spear,
-	leaderboard:    TRACKS.spear,
-	chat:           TRACKS.spear,
+	tokenInput:      TRACKS.raining,
+	audioSetup:      TRACKS.raining,
+	cage:            TRACKS.raining,
+	story1:          TRACKS.raining,
+	platformer:      TRACKS.bringItIn,
+	story2:          TRACKS.megalovania,
+	evil:            TRACKS.megalovania,
+	victory:         TRACKS.spear,
+	photo:           TRACKS.spear,
+	leaderboard:     TRACKS.spear,
+	chat:            TRACKS.spear,
 };
 
 let proc: ChildProcess | null = null;
 let currentTrack = '';
 
-function launch(): void {
-	if (!active) return;
-	// On the server the music is streamed to the browser — no local player needed
-	if (process.env['SERVER'] === 'true') return;
-	let child: ChildProcess;
-
+function spawnTrack(file: string): ChildProcess {
+	// On the server, music is streamed to the browser — no local player needed
+	if (process.env['SERVER'] === 'true') {
+		return spawn('true', [], {stdio: 'ignore'});
+	}
 	if (process.platform === 'win32') {
 		const vbsPath = join(tmpdir(), 'khlawde_music.vbs');
 		writeFileSync(vbsPath, [
@@ -56,19 +55,22 @@ function launch(): void {
 	if (process.platform === 'darwin') {
 		return spawn('afplay', [file], {stdio: 'ignore'});
 	}
-	return spawn('mpg123', ['-q', '--loop', '-1', file], {stdio: 'ignore'});
+	const child = spawn('mpg123', ['-q', '--loop', '-1', file], {stdio: 'ignore'});
+	child.on('error', (err: NodeJS.ErrnoException) => {
+		if (err.code === 'ENOENT') currentTrack = ''; // player not installed, give up
+	});
+	return child;
 }
 
 export function playTrack(file: string): void {
 	if (file === currentTrack && proc) return; // already playing this track
 
-	// Stop whatever is playing
 	proc?.kill();
 	proc = null;
 	currentTrack = file;
 
 	function launch() {
-		if (currentTrack !== file) return; // track changed while we were restarting
+		if (currentTrack !== file) return; // track changed while restarting
 		const child = spawnTrack(file);
 		proc = child;
 		child.on('exit', () => {
