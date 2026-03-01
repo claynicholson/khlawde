@@ -1,10 +1,13 @@
 import dotenv from 'dotenv';
 import path from 'node:path';
+import http from 'node:http';
 import {fileURLToPath} from 'node:url';
+import {createReadStream, existsSync} from 'node:fs';
 import express from 'express';
 import mongoose from 'mongoose';
 import helmet from 'helmet';
 import cors from 'cors';
+import {WebSocketServer} from 'ws';
 import leaderboardRouter from './routes/leaderboard.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -30,13 +33,64 @@ app.use(helmet({
 			scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
 			styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
 			fontSrc: ["'self'", "https://fonts.gstatic.com"],
-			connectSrc: ["'self'", "https://khlawde.notaroomba.dev"],
+			connectSrc: ["'self'", "https://khlawde.notaroomba.dev", "wss://khlawde.notaroomba.dev"],
+			mediaSrc: ["'self'", "http://tts.cyzon.us"],
 			imgSrc: ["'self'", "data:"],
 		},
 	},
 }));
 app.use(cors());
 app.use(express.json({limit: '16kb'}));
+
+// ─── Audio session management ─────────────────────────────────────────────────
+
+// Sessions registered by the SSH server: code -> browser WebSocket (or null)
+const sessions = new Map<string, {browserWs: any}>();
+
+// SSH server registers a new session code
+app.post('/sessions', (req, res) => {
+	const {code} = req.body as {code: string};
+	if (!code || typeof code !== 'string') {
+		res.status(400).json({error: 'Missing code'});
+		return;
+	}
+
+	sessions.set(code, {browserWs: null});
+	res.status(201).json({ok: true});
+});
+
+// SSH server removes a session on disconnect
+app.delete('/sessions/:code', (req, res) => {
+	const {code} = req.params;
+	const session = sessions.get(code);
+	if (session?.browserWs) {
+		try {
+			session.browserWs.close();
+		} catch {}
+	}
+
+	sessions.delete(code);
+	res.json({ok: true});
+});
+
+// CLI pushes a TTS URL → forward to the browser WebSocket
+app.post('/push', (req, res) => {
+	const {code, ttsUrl} = req.body as {code: string; ttsUrl: string};
+	const session = sessions.get(code);
+	if (session?.browserWs?.readyState === 1 /* OPEN */) {
+		session.browserWs.send(JSON.stringify({type: 'tts', url: ttsUrl}));
+	}
+
+	res.json({ok: true});
+});
+
+// CLI polls this to know when the browser has connected
+app.get('/check', (req, res) => {
+	const code = (req.query['code'] as string) ?? '';
+	const session = sessions.get(code);
+	const connected = Boolean(session?.browserWs && session.browserWs.readyState === 1);
+	res.json({connected});
+});
 
 app.use('/leaderboard', leaderboardRouter);
 
@@ -48,11 +102,67 @@ app.get('/', (_req, res) => {
 	res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
+// Explicit /listen route (static serves it as /listen.html, this handles the clean URL)
+app.get('/listen', (_req, res) => {
+	res.sendFile(path.join(frontendPath, 'listen.html'));
+});
+
+// Music asset served from the SSH server's assets directory
+const MUSIC_PATH = path.resolve(__dirname, '../../source/assets/Spear of Justice.mp3');
+app.get('/assets/music.mp3', (_req, res) => {
+	if (!existsSync(MUSIC_PATH)) {
+		res.status(404).end('Not found');
+		return;
+	}
+
+	res.setHeader('Content-Type', 'audio/mpeg');
+	res.setHeader('Cache-Control', 'public, max-age=86400');
+	createReadStream(MUSIC_PATH).pipe(res);
+});
+
+// ─── HTTP + WebSocket server ──────────────────────────────────────────────────
+
+const httpServer = http.createServer(app);
+
+const wss = new WebSocketServer({server: httpServer, path: '/ws'});
+
+wss.on('connection', (ws: any, req: http.IncomingMessage) => {
+	const url = new URL(req.url ?? '/', `http://localhost`);
+	const code = url.searchParams.get('code') ?? '';
+
+	if (!sessions.has(code)) {
+		ws.close(4004, 'Invalid session code');
+		return;
+	}
+
+	const session = sessions.get(code)!;
+
+	// Replace any existing browser connection
+	if (session.browserWs) {
+		try {
+			session.browserWs.close();
+		} catch {}
+	}
+
+	session.browserWs = ws;
+	ws.send(JSON.stringify({type: 'ready'}));
+
+	ws.on('close', () => {
+		if (session.browserWs === ws) {
+			session.browserWs = null;
+		}
+	});
+
+	ws.on('error', (err: Error) => {
+		console.error('Browser WS error:', err.message);
+	});
+});
+
 async function start() {
 	await mongoose.connect(MONGO_URI);
 	console.log('Connected to MongoDB');
 
-	app.listen(PORT, () => {
+	httpServer.listen(PORT, () => {
 		console.log(`Server running on http://localhost:${PORT}`);
 	});
 }

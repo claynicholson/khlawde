@@ -13,7 +13,7 @@ import LeaderboardView from './components/LeaderboardView.js';
 import StoryInterstitial from './components/StoryInterstitial.js';
 import AudioSetup from './components/AudioSetup.js';
 
-type Phase = 'menu' | 'viewLeaderboard' | 'tokenInput' | 'cage' | 'story1' | 'platformer' | 'story2' | 'evil' | 'victory' | 'leaderboard' | 'photo';
+type Phase = 'menu' | 'viewLeaderboard' | 'tokenInput' | 'audioSetup' | 'cage' | 'story1' | 'platformer' | 'story2' | 'evil' | 'victory' | 'leaderboard' | 'photo';
 
 // ─── Story text arrays ───────────────────────────────────────────────────────
 const STORY_AFTER_ESCAPE = [
