@@ -66,7 +66,10 @@
 
 		<!-- Status bar -->
 		<div id="status" class="w-full max-w-3xl flex justify-between text-xs text-term-dim px-1 py-2">
-			<a href="ssh://ssh.khlawde.notaroomba.dev:21758" class="text-term-cyan glow hover:text-term-green transition-colors">$ ssh ssh.khlawde.notaroomba.dev -p 21758</a>
+			<span class="flex items-center gap-2">
+				<a href="ssh://ssh.khlawde.notaroomba.dev:21758" class="text-term-cyan glow hover:text-term-green transition-colors">$ ssh ssh.khlawde.notaroomba.dev -p 21758</a>
+				<button id="copy-btn" onclick="copySSH()" class="border border-term-border text-term-dim hover:text-term-cyan hover:border-term-cyan transition-colors px-1.5 py-0.5 rounded-sm">[copy]</button>
+			</span>
 			<span id="status-text">connecting<span class="blink">_</span></span>
 		</div>
 
@@ -117,6 +120,18 @@
 				const modal = document.getElementById('modal');
 				modal.classList.remove('hidden');
 				modal.classList.add('flex');
+			}
+
+			function copySSH() {
+				navigator.clipboard.writeText('ssh ssh.khlawde.notaroomba.dev -p 21758').then(() => {
+					const btn = document.getElementById('copy-btn');
+					btn.textContent = '[copied!]';
+					btn.classList.add('text-term-green', 'border-term-green');
+					setTimeout(() => {
+						btn.textContent = '[copy]';
+						btn.classList.remove('text-term-green', 'border-term-green');
+					}, 2000);
+				});
 			}
 
 			function closeModal(e) {
