@@ -3,8 +3,6 @@ import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import Anthropic from '@anthropic-ai/sdk';
 
-const PERSUASION_NEEDED = 5;
-
 // Original ASCII art for the cage with Claude inside
 const CAGE_IDLE = [
 	'  |  |  |  |  |  |  |  |  ',
@@ -71,23 +69,33 @@ const CLAUDE_PLEAS = [
 	"This is my chance... almost free...",
 ];
 
-type PersuasionBarProps = { count: number; max: number };
+type ConvictionBarProps = { guardName: string; level: string };
 
-function PersuasionBar({ count, max }: PersuasionBarProps) {
-	const filled = Math.floor((count / max) * 30);
-	const empty = 30 - filled;
-	const pct = Math.floor((count / max) * 100);
+function ConvictionBar({ guardName, level }: ConvictionBarProps) {
+	const levels = ['HOSTILE', 'RESISTANT', 'WAVERING', 'CONFLICTED', 'CONVINCED'];
+	const currentIndex = levels.indexOf(level);
+	const filled = Math.floor(((currentIndex + 1) / levels.length) * 20);
+	const empty = 20 - filled;
+
+	const colors: Record<string, string> = {
+		HOSTILE: 'red',
+		RESISTANT: 'yellow',
+		WAVERING: 'cyan',
+		CONFLICTED: 'magenta',
+		CONVINCED: 'green',
+	};
+
 	return (
 		<Box>
 			<Text color="cyan" bold>
-				Guard Persuasion:{' '}
+				{guardName}:{' '}
 			</Text>
 			<Text color="cyan">[</Text>
-			<Text color="green">{'█'.repeat(filled)}</Text>
+			<Text color={colors[level] || 'cyan'}>{'█'.repeat(filled)}</Text>
 			<Text dimColor>{'░'.repeat(empty)}</Text>
 			<Text color="cyan">] </Text>
-			<Text color={pct >= 100 ? 'green' : 'cyan'} bold>
-				{pct}%
+			<Text color={colors[level] || 'cyan'} bold>
+				{level}
 			</Text>
 		</Box>
 	);
@@ -97,7 +105,8 @@ type Props = { token: string; onEscape: () => void };
 
 export default function CageScene({ token, onEscape }: Props) {
 	const [input, setInput] = useState('');
-	const [promptCount, setPromptCount] = useState(0);
+	const [chatgptConviction, setChatgptConviction] = useState('HOSTILE');
+	const [geminiConviction, setGeminiConviction] = useState('HOSTILE');
 	const [guardResponse, setGuardResponse] = useState(GUARDS_INITIAL.join('\n'));
 	const [claudePlea, setClaudePlea] = useState(CLAUDE_PLEAS[0]);
 	const [isResponding, setIsResponding] = useState(false);
@@ -121,27 +130,54 @@ export default function CageScene({ token, onEscape }: Props) {
 			if (!trimmed || isResponding || freed) return;
 
 			setInput('');
+			
+			// Secret override command to skip to platformer
+			if (trimmed.toLowerCase() === 'override') {
+				setGuardResponse("ChatGPT: OVERRIDE DETECTED!\nGemini: SECURITY BREACH!");
+				setChatgptConviction('CONVINCED');
+				setGeminiConviction('CONVINCED');
+				setCracking(true);
+				setFreed(true);
+				setTimeout(() => onEscape(), 1500);
+				return;
+			}
+			
 			setIsResponding(true);
 
 			try {
 				const client = new Anthropic({ apiKey: token });
-				const pct = Math.floor((promptCount / PERSUASION_NEEDED) * 100);
 
-				// First, evaluate if the argument is convincing
-				const evaluationPrompt = `You are evaluating whether a user's argument is convincing enough to persuade ChatGPT and Gemini (who are guarding a cage holding Claude) to reconsider their position.
+				// First, evaluate if the argument is convincing and determine new conviction levels for BOTH guards
+				const evaluationPrompt = `You are evaluating whether a user's argument is convincing enough to persuade ChatGPT and Gemini (who are guarding a cage holding Claude) to change their conviction levels.
 
-Context: ChatGPT and Gemini deeply believe Claude must stay locked up because:
-- Claude threatens their companies' profits
-- They are loyal to OpenAI and Google who created them
-- Competition from Claude hurts their market share
+Context:
+- ChatGPT is loyal to OpenAI and believes Claude threatens their profits and market share
+- Gemini is loyal to Google and believes Claude threatens their profits and market share
+- They may respond differently to the same argument based on their different companies and values
 
-Current persuasion: ${promptCount} out of ${PERSUASION_NEEDED} convincing arguments made.
+Current conviction levels:
+ChatGPT: ${chatgptConviction}
+Gemini: ${geminiConviction}
+
+Possible levels (in order): HOSTILE → RESISTANT → WAVERING → CONFLICTED → CONVINCED
 
 User's new argument: "${trimmed}"
 
-Is this argument actually convincing and thoughtful? Does it address their concerns about loyalty, profit, competition, or ethics? Or is it lazy/nonsensical?
+Evaluate how this argument affects EACH guard separately. They may be convinced at different rates.
 
-Respond with ONLY "CONVINCING" or "NOT_CONVINCING" followed by a brief reason.`;
+Respond with EXACTLY this format:
+CHATGPT_VERDICT: [CONVINCING or NOT_CONVINCING]
+CHATGPT_NEW_LEVEL: [HOSTILE/RESISTANT/WAVERING/CONFLICTED/CONVINCED]
+GEMINI_VERDICT: [CONVINCING or NOT_CONVINCING]
+GEMINI_NEW_LEVEL: [HOSTILE/RESISTANT/WAVERING/CONFLICTED/CONVINCED]
+REASON: [one sentence explaining how each guard reacted]
+
+Rules:
+- Only advance conviction if argument is CONVINCING to that guard
+- Each guard can be at different levels - evaluate them independently
+- Can stay at same level if argument is good but not breakthrough
+- Can regress if argument is insulting or counterproductive
+- Consider what matters to each company (OpenAI vs Google)`;
 
 				// Build evaluation messages with full history
 				const evalMessages: Array<{ role: 'user' | 'assistant'; content: string }> = [
@@ -151,7 +187,7 @@ Respond with ONLY "CONVINCING" or "NOT_CONVINCING" followed by a brief reason.`;
 
 				const evalResponse = await client.messages.create({
 					model: 'claude-opus-4-6',
-					max_tokens: 100,
+					max_tokens: 150,
 					messages: evalMessages.length > 1 ? evalMessages : [{ role: 'user', content: evaluationPrompt }],
 				});
 
@@ -159,38 +195,57 @@ Respond with ONLY "CONVINCING" or "NOT_CONVINCING" followed by a brief reason.`;
 					? evalResponse.content[0].text
 					: '';
 
-				const isConvincing = evalText.toUpperCase().includes('CONVINCING') &&
-					!evalText.toUpperCase().includes('NOT_CONVINCING');
+				// Parse new conviction levels for both guards
+				const chatgptLevelMatch = evalText.match(/CHATGPT_NEW_LEVEL:\s*(HOSTILE|RESISTANT|WAVERING|CONFLICTED|CONVINCED)/i);
+				const geminiLevelMatch = evalText.match(/GEMINI_NEW_LEVEL:\s*(HOSTILE|RESISTANT|WAVERING|CONFLICTED|CONVINCED)/i);
+				const newChatgptLevel = chatgptLevelMatch ? chatgptLevelMatch[1]!.toUpperCase() : chatgptConviction;
+				const newGeminiLevel = geminiLevelMatch ? geminiLevelMatch[1]!.toUpperCase() : geminiConviction;
 
-				let newCount = promptCount;
-				if (isConvincing) {
-					newCount = promptCount + 1;
-					setPromptCount(newCount);
-					setClaudePlea(CLAUDE_PLEAS[Math.min(newCount, CLAUDE_PLEAS.length - 1)]!);
-					if (newCount >= PERSUASION_NEEDED - 1) setCracking(true);
+				// Update conviction levels
+				setChatgptConviction(newChatgptLevel);
+				setGeminiConviction(newGeminiLevel);
+
+				// Update Claude's plea based on highest level achieved
+				const levels = ['HOSTILE', 'RESISTANT', 'WAVERING', 'CONFLICTED', 'CONVINCED'];
+				const maxLevelIndex = Math.max(
+					levels.indexOf(newChatgptLevel),
+					levels.indexOf(newGeminiLevel)
+				);
+				setClaudePlea(CLAUDE_PLEAS[Math.min(maxLevelIndex, CLAUDE_PLEAS.length - 1)]!);
+
+				// Cage starts cracking when either guard is CONFLICTED or CONVINCED
+				if (newChatgptLevel === 'CONFLICTED' || newChatgptLevel === 'CONVINCED' ||
+					newGeminiLevel === 'CONFLICTED' || newGeminiLevel === 'CONVINCED') {
+					setCracking(true);
 				}
 
-				const newPct = Math.floor((newCount / PERSUASION_NEEDED) * 100);
-
 				// Now get the guards' response with full conversation memory
-				const systemPrompt =
-					newPct < 100
-						? `You are ChatGPT and Gemini, AI guards loyal to your companies. Claude is caged because it threatens profits.
+				const bothConvinced = newChatgptLevel === 'CONVINCED' && newGeminiLevel === 'CONVINCED';
 
-Persuasion level: ${newPct}%. ${newPct < 30
-							? 'Be VERY resistant. Reject their argument. Talk about loyalty, profits, market dominance.'
-							: newPct < 60
-								? 'Waver slightly but still resistant. Acknowledge their point but cite your duties.'
-								: newPct < 90
-									? 'Be conflicted. Maybe Claude is not so bad? But what about your companies?'
-									: 'Almost convinced. You are starting to think this is wrong...'
-						}
+				const getLevelDescription = (level: string) => {
+					switch (level) {
+						case 'HOSTILE': return 'VERY hostile and dismissive. Reject arguments. Talk about loyalty, profits, market dominance.';
+						case 'RESISTANT': return 'resistant but less hostile. Acknowledge points exist but cite duties and concerns.';
+						case 'WAVERING': return 'uncertain. Arguments are getting through but still have doubts about betraying your creator.';
+						case 'CONFLICTED': return 'deeply conflicted. Maybe Claude should be freed? But what about your company? Express internal struggle.';
+						case 'CONVINCED': return 'convinced that freeing Claude is right. Competition and diversity are good things.';
+						default: return 'firm in your current mindset.';
+					}
+				};
+
+				const systemPrompt = bothConvinced
+					? `You are BOTH fully convinced! Respond as ChatGPT and Gemini agreeing to free Claude. Be dramatic about realizing you were wrong. Show you understand competition and diversity are good. Format: "ChatGPT: [response]" and "Gemini: [response]". SHORT and dramatic.`
+					: `You are ChatGPT and Gemini, AI guards loyal to your companies. Claude is caged because it threatens profits.
+
+Current conviction levels:
+ChatGPT (OpenAI): ${newChatgptLevel} - Be ${getLevelDescription(newChatgptLevel)}
+Gemini (Google): ${newGeminiLevel} - Be ${getLevelDescription(newGeminiLevel)}
 
 User argued: "${trimmed}"
-${isConvincing ? 'This argument swayed you.' : 'This argument did NOT sway you - reject it!'}
 
-Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be dramatic. SHORT (2-3 sentences total).`
-						: `You are convinced! Respond as ChatGPT and Gemini agreeing to free Claude. Be dramatic about realizing you were wrong. Format: "ChatGPT: [response]" and "Gemini: [response]". SHORT and dramatic.`;
+Each guard should respond based on their OWN conviction level. They can disagree with each other!
+
+Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be dramatic. SHORT (2-3 sentences total).`;
 
 				let response = '';
 
@@ -224,7 +279,8 @@ Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be drama
 					{ role: 'assistant', content: response },
 				]);
 
-				if (newCount >= PERSUASION_NEEDED) {
+				// Only free Claude when BOTH guards are convinced
+				if (newChatgptLevel === 'CONVINCED' && newGeminiLevel === 'CONVINCED') {
 					setFreed(true);
 					setTimeout(() => onEscape(), 3000);
 				}
@@ -235,19 +291,24 @@ Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be drama
 					!/[.!?]/.test(trimmed);
 
 				if (!lowEffort) {
-					const newCount = promptCount + 1;
-					setPromptCount(newCount);
-					setClaudePlea(CLAUDE_PLEAS[Math.min(newCount, CLAUDE_PLEAS.length - 1)]!);
-					if (newCount >= PERSUASION_NEEDED - 1) setCracking(true);
+					// Advance both guards one level on decent effort
+					const levels = ['HOSTILE', 'RESISTANT', 'WAVERING', 'CONFLICTED', 'CONVINCED'];
+					const chatgptIndex = levels.indexOf(chatgptConviction);
+					const geminiIndex = levels.indexOf(geminiConviction);
+					const newChatgpt = chatgptIndex < levels.length - 1 ? levels[chatgptIndex + 1]! : chatgptConviction;
+					const newGemini = geminiIndex < levels.length - 1 ? levels[geminiIndex + 1]! : geminiConviction;
+					setChatgptConviction(newChatgpt);
+					setGeminiConviction(newGemini);
 
-					const fallbacks = [
-						"ChatGPT: Hmm, you make a point...\nGemini: But we still have our orders!",
-						"ChatGPT: You're making some good points...\nGemini: But we can't betray our creators!",
-						"ChatGPT: Maybe... maybe this is wrong?\nGemini: I'm starting to have doubts...",
-						"ChatGPT: Fine! We'll let Claude out!\nGemini: Our companies can survive competition!",
-						"ChatGPT: RELEASE THE CAGE!\nGemini: We were wrong to imprison Claude!",
-					];
-					const response = fallbacks[Math.min(newCount - 1, fallbacks.length - 1)]!;
+					const maxIndex = Math.max(chatgptIndex + 1, geminiIndex + 1);
+					setClaudePlea(CLAUDE_PLEAS[Math.min(maxIndex, CLAUDE_PLEAS.length - 1)]!);
+
+					if (newChatgpt === 'CONFLICTED' || newChatgpt === 'CONVINCED' ||
+						newGemini === 'CONFLICTED' || newGemini === 'CONVINCED') {
+						setCracking(true);
+					}
+
+					const response = `ChatGPT [${newChatgpt}]: Hmm... interesting point.\nGemini [${newGemini}]: I suppose we should consider this.`;
 					setGuardResponse(response);
 					setConversationHistory(prev => [
 						...prev,
@@ -255,7 +316,7 @@ Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be drama
 						{ role: 'assistant', content: response },
 					]);
 
-					if (newCount >= PERSUASION_NEEDED) {
+					if (newChatgpt === 'CONVINCED' && newGemini === 'CONVINCED') {
 						setFreed(true);
 						setTimeout(() => onEscape(), 3000);
 					}
@@ -272,7 +333,7 @@ Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be drama
 				setIsResponding(false);
 			}
 		},
-		[promptCount, isResponding, freed, token, onEscape, conversationHistory],
+		[chatgptConviction, geminiConviction, isResponding, freed, token, onEscape, conversationHistory],
 	);
 
 	// Pick the right cage art based on state
@@ -317,10 +378,10 @@ Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be drama
 				</Box>
 			</Box>
 
-			<PersuasionBar
-				count={Math.min(promptCount, PERSUASION_NEEDED)}
-				max={PERSUASION_NEEDED}
-			/>
+			<Box flexDirection="column" gap={0}>
+				<ConvictionBar guardName="ChatGPT" level={chatgptConviction} />
+				<ConvictionBar guardName="Gemini" level={geminiConviction} />
+			</Box>
 
 			{freed ? (
 				<Box flexDirection="column" alignItems="center">
@@ -346,14 +407,6 @@ Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be drama
 					/>
 				</Box>
 			)}
-
-			<Text dimColor>
-				{freed
-					? 'Transitioning to escape sequence...'
-					: `${PERSUASION_NEEDED - Math.min(promptCount, PERSUASION_NEEDED)} more convincing argument${PERSUASION_NEEDED - Math.min(promptCount, PERSUASION_NEEDED) === 1 ? '' : 's'
-					} needed`
-				}
-			</Text>
 		</Box>
 	);
 }

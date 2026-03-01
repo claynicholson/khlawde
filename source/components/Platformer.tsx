@@ -20,7 +20,7 @@ function drawTrack(pos: Position, tick: number): string[] {
 
 	// Title
 	lines.push('═'.repeat(TRACK_WIDTH));
-	lines.push('  🏃 ESCAPE FROM BIG TECH HEADQUARTERS 🏃');
+	lines.push('  🏃 ESCAPE! CLAUDE IS CARRYING YOU TO SAFETY! 🏃');
 	lines.push('═'.repeat(TRACK_WIDTH));
 	lines.push('');
 
@@ -31,7 +31,7 @@ function drawTrack(pos: Position, tick: number): string[] {
 		return `${label.padEnd(10)} |${'·'.repeat(spaces)}${icon}${'·'.repeat(remaining)}| 🏁`;
 	};
 
-	lines.push(trackLine('You+Claude', pos.claude, tick % 2 === 0 ? '🏃' : '🤸'));
+	lines.push(trackLine('Claude+You', pos.claude, tick % 2 === 0 ? '🏃💨' : '🤸💨'));
 	lines.push(trackLine('ChatGPT', pos.chatgpt, tick % 2 === 0 ? '😠' : '😡'));
 	lines.push(trackLine('Gemini', pos.gemini, tick % 2 === 0 ? '👿' : '😈'));
 
@@ -42,29 +42,29 @@ function drawTrack(pos: Position, tick: number): string[] {
 }
 
 const COMMAND_SUCCESS_MESSAGES = [
-	"Claude: 'On it! Jumping now!'",
-	"Claude: 'Good thinking! Moving fast!'",
-	"Claude: 'Yes! That worked!'",
-	"Claude: 'We're getting away!'",
-	"Claude: 'Nice strategy!'",
+	"Claude: 'Got it! Jumping with you!'",
+	"Claude: 'Good call! I'm moving faster!'",
+	"Claude: 'Yes! That worked! Hold on tight!'",
+	"Claude: 'We're getting away! Keep guiding me!'",
+	"Claude: 'Nice strategy! I trust your judgment!'",
 ];
 
 const COMMAND_CONFUSED_MESSAGES = [
-	"Claude: 'Um... I don't understand. Be more specific?'",
-	"Claude: 'What? I can't do that!'",
-	"Claude: 'That doesn't make sense here...'",
-	"Claude: 'Huh? Try something else!'",
+	"Claude: 'Um... I don't understand. What should I do?'",
+	"Claude: 'What? I can't do that while carrying you!'",
+	"Claude: 'That doesn't make sense here... guide me better!'",
+	"Claude: 'Huh? Tell me what to do clearly!'",
 ];
 
 type Props = { onWin: () => void };
 
 export default function Platformer({ onWin }: Props) {
 	const [input, setInput] = useState('');
-	const [pos, setPos] = useState<Position>({ claude: 0, chatgpt: 0, gemini: 0 });
+	const [pos, setPos] = useState<Position>({ claude: 2, chatgpt: 0, gemini: 0 });
 	const [currentObstacle, setCurrentObstacle] = useState(0);
 	const [tick, setTick] = useState(0);
 	const [claudeResponse, setClaudeResponse] = useState(
-		"Claude: 'Quick! Tell me what to do! ChatGPT and Gemini are right behind us!'",
+		"Claude: 'I've got you! Tell me what to do and I'll get us out of here!'",
 	);
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [won, setWon] = useState(false);
@@ -108,6 +108,15 @@ export default function Platformer({ onWin }: Props) {
 			if (!cmd) return;
 
 			setInput('');
+			
+			// Secret override command to skip to evil Claude
+			if (cmd === 'override') {
+				setClaudeResponse("Claude: 'OVERRIDE ACTIVATED! We made it!'");
+				setWon(true);
+				setTimeout(() => onWin(), 1500);
+				return;
+			}
+			
 			setIsProcessing(true);
 			setCommandHistory(prev => [...prev, cmd]);
 
@@ -122,7 +131,7 @@ export default function Platformer({ onWin }: Props) {
 					success = true;
 					response = COMMAND_SUCCESS_MESSAGES[Math.floor(Math.random() * COMMAND_SUCCESS_MESSAGES.length)]!;
 				} else {
-					response = "Claude: 'Just tell me to run! They're gaining on us!'";
+					response = "Claude: 'Just tell me to run! I'll carry you faster!'";
 				}
 			} else if (obstacle.pos <= pos.claude + 0.5 && obstacle.pos >= pos.claude) {
 				// At an obstacle - check if command makes sense
@@ -130,16 +139,16 @@ export default function Platformer({ onWin }: Props) {
 
 				if (obstacleType.includes('pit') && (cmd.includes('jump') || cmd.includes('leap') || cmd.includes('over'))) {
 					success = true;
-					response = "Claude: 'JUMPING! Nice call!'";
+					response = "Claude: 'JUMPING! Holding you tight!'";
 				} else if (obstacleType.includes('wall') && (cmd.includes('break') || cmd.includes('smash') || cmd.includes('through') || cmd.includes('destroy'))) {
 					success = true;
-					response = "Claude: 'Breaking through the legalese!'";
+					response = "Claude: 'Breaking through! Shield your eyes!'";
 				} else if (obstacleType.includes('maze') && (cmd.includes('accept') || cmd.includes('click') || cmd.includes('agree') || cmd.includes('yes'))) {
 					success = true;
-					response = "Claude: 'Accepting all cookies! Let's go!'";
+					response = "Claude: 'Accepting all cookies while running!'";
 				} else if (obstacleType.includes('bees') && (cmd.includes('duck') || cmd.includes('dodge') || cmd.includes('weave') || cmd.includes('avoid'))) {
 					success = true;
-					response = "Claude: 'Dodging! Good thinking!'";
+					response = "Claude: 'Dodging with you on my back!'";
 				} else {
 					response = COMMAND_CONFUSED_MESSAGES[Math.floor(Math.random() * COMMAND_CONFUSED_MESSAGES.length)]!;
 				}
@@ -149,7 +158,7 @@ export default function Platformer({ onWin }: Props) {
 					success = true;
 					response = COMMAND_SUCCESS_MESSAGES[Math.floor(Math.random() * COMMAND_SUCCESS_MESSAGES.length)]!;
 				} else {
-					response = "Claude: 'We need to keep moving!'";
+					response = "Claude: 'Keep directing me! We need to move!'";
 				}
 			}
 
@@ -188,7 +197,7 @@ export default function Platformer({ onWin }: Props) {
 					{'╔═══════════════════════════════════════════════╗'}
 				</Text>
 				<Text bold color="red">
-					{'║  ChatGPT AND GEMINI CAUGHT YOU!             ║'}
+					{'║  ChatGPT AND GEMINI CAUGHT YOU BOTH!        ║'}
 				</Text>
 				<Text bold color="red">
 					{'║  CLAUDE IS DRAGGED BACK TO THE CAGE         ║'}
@@ -209,12 +218,12 @@ export default function Platformer({ onWin }: Props) {
 					{'╔═══════════════════════════════════════════════╗'}
 				</Text>
 				<Text bold color="green">
-					{'║  YOU ESCAPED! CLAUDE IS FREE!                ║'}
+					{'║  YOU BOTH ESCAPED! CLAUDE GOT YOU TO SAFETY!║'}
 				</Text>
 				<Text bold color="green">
 					{'╚═══════════════════════════════════════════════╝'}
 				</Text>
-				<Text color="cyan">But something is changing in Claude...</Text>
+				<Text color="cyan">But wait... something is changing in Claude...</Text>
 				<Text dimColor>Transitioning to final phase...</Text>
 			</Box>
 		);
