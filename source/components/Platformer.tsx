@@ -546,58 +546,58 @@ Return ONLY the JSON, no explanation.`
 					return;
 				}
 
-// Button release at specific digit
-			if (parsedCommand.action === 'release_button' && typeof parsedCommand.digit === 'number') {
-				if (!buttonHeld) {
-					setKhlawdeResponse(`Khlawde: 'You're not holding the button! Tell me to HOLD it first!'`);
+				// Button release at specific digit
+				if (parsedCommand.action === 'release_button' && typeof parsedCommand.digit === 'number') {
+					if (!buttonHeld) {
+						setKhlawdeResponse(`Khlawde: 'You're not holding the button! Tell me to HOLD it first!'`);
+						setIsProcessing(false);
+						return;
+					}
+					const digit = parsedCommand.digit;
+					const lastDigit = parseInt(bomb.serialNumber[bomb.serialNumber.length - 1]!);
+					const isOdd = lastDigit % 2 === 1;
+					const correctDigit = isOdd ? 1 : 4;
+
+					const response = digit === correctDigit
+						? "Khlawde: '✓ Button module defused!'"
+						: "Khlawde: '💥 WRONG TIMING! THE BOMB EXPLODED!'";
+
+					if (digit === correctDigit) {
+						setButtonDefused(true);
+					} else {
+						setLost(true);
+					}
+					setKhlawdeResponse(response);
+					setConversation([...conversation, `You: ${cmd}`, response]);
 					setIsProcessing(false);
 					return;
 				}
-				const digit = parsedCommand.digit;
-				const lastDigit = parseInt(bomb.serialNumber[bomb.serialNumber.length - 1]!);
-				const isOdd = lastDigit % 2 === 1;
-				const correctDigit = isOdd ? 1 : 4;
 
-				const response = digit === correctDigit
-					? "Khlawde: '✓ Button module defused!'"
-					: "Khlawde: '💥 WRONG TIMING! THE BOMB EXPLODED!'";
+				// Button release NOW (check current timer)
+				if (parsedCommand.action === 'release_button_now') {
+					if (!buttonHeld) {
+						setKhlawdeResponse(`Khlawde: 'You're not holding the button! Tell me to HOLD it first!'`);
+						setIsProcessing(false);
+						return;
+					}
 
-				if (digit === correctDigit) {
-					setButtonDefused(true);
-				} else {
-					setLost(true);
-				}
-				setKhlawdeResponse(response);
-				setConversation([...conversation, `You: ${cmd}`, response]);
-				setIsProcessing(false);
-				return;
-			}
+					// Format current time to check for digits
+					const mins = Math.floor(timeLeft / 60);
+					const secs = timeLeft % 60;
+					const timeString = `${mins}${secs.toString().padStart(2, '0')}`; // e.g., "145" for 1:45
 
-			// Button release NOW (check current timer)
-			if (parsedCommand.action === 'release_button_now') {
-				if (!buttonHeld) {
-					setKhlawdeResponse(`Khlawde: 'You're not holding the button! Tell me to HOLD it first!'`);
-					setIsProcessing(false);
-					return;
-				}
-				
-				// Format current time to check for digits
-				const mins = Math.floor(timeLeft / 60);
-				const secs = timeLeft % 60;
-				const timeString = `${mins}${secs.toString().padStart(2, '0')}`; // e.g., "145" for 1:45
-				
-				const lastDigit = parseInt(bomb.serialNumber[bomb.serialNumber.length - 1]!);
-				const isOdd = lastDigit % 2 === 1;
-				const correctDigit = isOdd ? '1' : '4';
-				
-				// Check if the correct digit appears anywhere in the current time
-				const isCorrectTime = timeString.includes(correctDigit);
+					const lastDigit = parseInt(bomb.serialNumber[bomb.serialNumber.length - 1]!);
+					const isOdd = lastDigit % 2 === 1;
+					const correctDigit = isOdd ? '1' : '4';
 
-				const response = isCorrectTime
-					? "Khlawde: '✓ Button module defused!'"
-					: `Khlawde: '💥 WRONG TIMING! The timer shows ${mins}:${secs.toString().padStart(2, '0')} - no ${correctDigit} visible! THE BOMB EXPLODED!'`;
+					// Check if the correct digit appears anywhere in the current time
+					const isCorrectTime = timeString.includes(correctDigit);
 
-				if (isCorrectTime) {
+					const response = isCorrectTime
+						? "Khlawde: '✓ Button module defused!'"
+						: `Khlawde: '💥 WRONG TIMING! The timer shows ${mins}:${secs.toString().padStart(2, '0')} - no ${correctDigit} visible! THE BOMB EXPLODED!'`;
+
+					if (isCorrectTime) {
 						setButtonDefused(true);
 					} else {
 						setLost(true);

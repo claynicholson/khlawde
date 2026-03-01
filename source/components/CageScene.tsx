@@ -312,15 +312,15 @@ Format EXACTLY as: "ChatGPT: [response]\nGemini: [response]". Always start Gemin
 					) {
 						response += event.delta.text;
 						ttsBuf += event.delta.text;
-						
+
 						// Parse and separate the responses
 						const parts = response.split(/\n/);
 						const chatgptLine = parts.find(p => p.trim().startsWith('ChatGPT:'));
 						const geminiLine = parts.find(p => p.trim().startsWith('Gemini:'));
-						
+
 						if (chatgptLine) setChatgptResponse(chatgptLine.trim());
 						if (geminiLine) setGeminiResponse(geminiLine.trim());
-						
+
 						// Flush complete sentences as they arrive
 						const re = /[^.!?]*[.!?]+\s*/g;
 						let m: RegExpExecArray | null;
