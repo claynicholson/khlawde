@@ -1,12 +1,12 @@
-import React, {useState, useEffect, useCallback, useRef} from 'react';
-import {Box, Text, useInput} from 'ink';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
-import {spawn, type ChildProcess} from 'child_process';
-import {createRequire} from 'module';
+import { spawn, type ChildProcess } from 'child_process';
+import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg') as {path: string};
+const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg') as { path: string };
 const FFMPEG_BIN = ffmpegInstaller.path;
 
 // ─── Dimensions ───────────────────────────────────────────────────────────────
@@ -114,19 +114,19 @@ function buildPhoto(username: string, frame: string): string {
 }
 
 // ─── Backend POST ─────────────────────────────────────────────────────────────
-async function postEntry(backendUrl: string, username: string, asciiImage: string): Promise<{ok: boolean; msg: string}> {
+async function postEntry(backendUrl: string, username: string, asciiImage: string): Promise<{ ok: boolean; msg: string }> {
 	const base = backendUrl.replace(/\/$/, '');
 	try {
 		const res = await fetch(`${base}/leaderboard`, {
 			method: 'POST',
-			headers: {'Content-Type': 'application/json'},
-			body: JSON.stringify({username, tokens: 0, asciiImage}),
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ username, tokens: 0, asciiImage }),
 		});
 		const data = (await res.json()) as Record<string, unknown>;
-		if (res.ok) return {ok: true, msg: 'Saved to leaderboard!'};
-		return {ok: false, msg: `Error: ${String(data['error'] ?? `HTTP ${res.status}`)}`};
+		if (res.ok) return { ok: true, msg: 'Saved to leaderboard!' };
+		return { ok: false, msg: `Error: ${String(data['error'] ?? `HTTP ${res.status}`)}` };
 	} catch (e) {
-		return {ok: false, msg: `Error: ${e instanceof Error ? e.message : 'Network error'}`};
+		return { ok: false, msg: `Error: ${e instanceof Error ? e.message : 'Network error'}` };
 	}
 }
 
@@ -134,9 +134,9 @@ async function postEntry(backendUrl: string, username: string, asciiImage: strin
 type BoothPhase = 'viewfinder' | 'flash' | 'naming' | 'submitting' | 'done';
 type CamStatus = 'detecting' | 'live' | 'offline';
 
-type Props = {onDone: () => void; backendUrl?: string};
+type Props = { onDone: () => void; backendUrl?: string };
 
-export default function PhotoBooth({onDone, backendUrl = 'https://khlawde.notaroomba.dev'}: Props) {
+export default function PhotoBooth({ onDone, backendUrl = 'https://khlawde.notaroomba.dev' }: Props) {
 	const [boothPhase, setBoothPhase] = useState<BoothPhase>('viewfinder');
 	const [camStatus, setCamStatus] = useState<CamStatus>('detecting');
 	const [liveFeed, setLiveFeed] = useState('');
@@ -164,7 +164,7 @@ export default function PhotoBooth({onDone, backendUrl = 'https://khlawde.notaro
 			try {
 				// Check ffmpeg is on PATH
 				await new Promise<void>((res, rej) => {
-					const c = spawn(FFMPEG_BIN, ['-version'], {stdio: 'ignore'});
+					const c = spawn(FFMPEG_BIN, ['-version'], { stdio: 'ignore' });
 					c.on('close', code => (code === 0 ? res() : rej(new Error('exit ' + String(code)))));
 					c.on('error', rej);
 					setTimeout(rej, 2000);
@@ -175,7 +175,7 @@ export default function PhotoBooth({onDone, backendUrl = 'https://khlawde.notaro
 				if (process.platform === 'win32') cam = await detectWindowsCamera();
 				if (cancelled) return;
 
-				const proc = spawn(FFMPEG_BIN, buildFfmpegArgs(cam), {stdio: ['ignore', 'pipe', 'ignore']});
+				const proc = spawn(FFMPEG_BIN, buildFfmpegArgs(cam), { stdio: ['ignore', 'pipe', 'ignore'] });
 				procRef.current = proc;
 
 				proc.stdout?.on('data', (chunk: Buffer) => {
@@ -238,7 +238,7 @@ export default function PhotoBooth({onDone, backendUrl = 'https://khlawde.notaro
 
 			if (boothPhase === 'done' && key.return) onDone();
 		},
-		{isActive: boothPhase === 'viewfinder' || boothPhase === 'done'},
+		{ isActive: boothPhase === 'viewfinder' || boothPhase === 'done' },
 	);
 
 	const handleSubmit = useCallback(
@@ -254,7 +254,7 @@ export default function PhotoBooth({onDone, backendUrl = 'https://khlawde.notaro
 			const photo = buildPhoto(trimmed, frozenFrame);
 			setFrozenPhoto(photo);
 			setBoothPhase('submitting');
-			const {ok, msg} = await postEntry(backendUrl, trimmed, photo);
+			const { ok, msg } = await postEntry(backendUrl, trimmed, photo);
 			setSubmitMsg(ok ? msg : msg);
 			setBoothPhase('done');
 		},

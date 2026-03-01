@@ -3,7 +3,7 @@ import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import Anthropic from '@anthropic-ai/sdk';
 
-const BOMB_TIMER = 90; // 45 seconds for quick demo
+const BOMB_TIMER = 150; // 45 seconds for quick demo
 
 type WireColor = 'red' | 'blue' | 'yellow' | 'white' | 'black';
 type ButtonColor = 'red' | 'blue' | 'yellow' | 'white';

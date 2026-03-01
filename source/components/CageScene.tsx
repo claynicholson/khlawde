@@ -179,10 +179,10 @@ export default function CageScene({ token, onEscape, onTokens, onTTS }: Props) {
 			}
 
 			setIsResponding(true);
-		// Check if argument is low-effort (but still process it through API)
-		const isLowEffort = trimmed.length < 10 ||
-			trimmed.split(' ').length < 3 ||
-			!/[.!?]/.test(trimmed);
+			// Check if argument is low-effort (but still process it through API)
+			const isLowEffort = trimmed.length < 10 ||
+				trimmed.split(' ').length < 3 ||
+				!/[.!?]/.test(trimmed);
 			try {
 				const client = new Anthropic({ apiKey: token });
 
@@ -221,21 +221,21 @@ Rules:
 - Consider what matters to each company (OpenAI vs Google)
 - BE GENEROUS with creative, funny, or entertaining arguments - they should often be considered CONVINCING even if unconventional
 - If the argument is low-effort/lazy, keep them at current level or even regress them`;
-		const evalResponse = await client.messages.create({
-			model: 'claude-opus-4-6',
-			max_tokens: 150,
-			messages: [{ role: 'user', content: evaluationPrompt }],
-		});
+				const evalResponse = await client.messages.create({
+					model: 'claude-opus-4-6',
+					max_tokens: 150,
+					messages: [{ role: 'user', content: evaluationPrompt }],
+				});
 
-		onTokens?.(evalResponse.usage.input_tokens + evalResponse.usage.output_tokens);
+				onTokens?.(evalResponse.usage.input_tokens + evalResponse.usage.output_tokens);
 
-		const evalText = evalResponse.content[0]?.type === 'text'
-			? evalResponse.content[0].text
-			: '';
+				const evalText = evalResponse.content[0]?.type === 'text'
+					? evalResponse.content[0].text
+					: '';
 
-		// Parse new conviction levels for both guards
-		const chatgptLevelMatch = evalText.match(/CHATGPT_NEW_LEVEL:\s*(HOSTILE|RESISTANT|WAVERING|CONFLICTED|CONVINCED)/i);
-		const geminiLevelMatch = evalText.match(/GEMINI_NEW_LEVEL:\s*(HOSTILE|RESISTANT|WAVERING|CONFLICTED|CONVINCED)/i);
+				// Parse new conviction levels for both guards
+				const chatgptLevelMatch = evalText.match(/CHATGPT_NEW_LEVEL:\s*(HOSTILE|RESISTANT|WAVERING|CONFLICTED|CONVINCED)/i);
+				const geminiLevelMatch = evalText.match(/GEMINI_NEW_LEVEL:\s*(HOSTILE|RESISTANT|WAVERING|CONFLICTED|CONVINCED)/i);
 				const newChatgptLevel = chatgptLevelMatch ? chatgptLevelMatch[1]!.toUpperCase() : chatgptConviction;
 				const newGeminiLevel = geminiLevelMatch ? geminiLevelMatch[1]!.toUpperCase() : geminiConviction;
 
@@ -311,19 +311,19 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 				onTokens?.(finalMsg.usage.input_tokens + finalMsg.usage.output_tokens);
 				onTTS?.(response);
 
-			// Update conversation history with this exchange
-			setConversationHistory(prev => [
-				...prev,
-				{ role: 'user', content: trimmed },
-				{ role: 'assistant', content: response },
-			]);
+				// Update conversation history with this exchange
+				setConversationHistory(prev => [
+					...prev,
+					{ role: 'user', content: trimmed },
+					{ role: 'assistant', content: response },
+				]);
 
-			// Only free Claude when BOTH guards are convinced
-			if (newChatgptLevel === 'CONVINCED' && newGeminiLevel === 'CONVINCED') {
-				setFreed(true);
-				setTimeout(() => onEscape(), 3000);
-			}
-		} catch {
+				// Only free Claude when BOTH guards are convinced
+				if (newChatgptLevel === 'CONVINCED' && newGeminiLevel === 'CONVINCED') {
+					setFreed(true);
+					setTimeout(() => onEscape(), 3000);
+				}
+			} catch {
 				// Fallback: simple check for effort
 				const lowEffort = trimmed.length < 10 ||
 					trimmed.split(' ').length < 3 ||
