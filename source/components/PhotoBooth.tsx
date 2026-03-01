@@ -2,10 +2,16 @@ import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {Box, Text, useInput} from 'ink';
 import TextInput from 'ink-text-input';
 import {spawn, type ChildProcess} from 'child_process';
+import {createRequire} from 'module';
+
+const require = createRequire(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg') as {path: string};
+const FFMPEG_BIN = ffmpegInstaller.path;
 
 // ─── Dimensions ───────────────────────────────────────────────────────────────
-const VIEW_W = 60;
-const VIEW_H = 20;
+const VIEW_W = 100;
+const VIEW_H = 40;
 const FRAME_BYTES = VIEW_W * VIEW_H * 3; // raw RGB24
 
 // ─── ASCII conversion (no external packages) ──────────────────────────────────
@@ -16,7 +22,7 @@ function rawToAscii(buf: Buffer): string {
 	for (let y = 0; y < VIEW_H; y++) {
 		let row = '';
 		for (let x = 0; x < VIEW_W; x++) {
-			const i = (y * VIEW_W + x) * 3;
+			const i = (y * VIEW_W + (VIEW_W - 1 - x)) * 3;
 			const luma = 0.299 * (buf[i] ?? 0) + 0.587 * (buf[i + 1] ?? 0) + 0.114 * (buf[i + 2] ?? 0);
 			row += CHARS[Math.min(Math.floor((luma / 255) * CHARS.length), CHARS.length - 1)];
 		}
@@ -30,7 +36,7 @@ function rawToAscii(buf: Buffer): string {
 // ─── Camera detection ─────────────────────────────────────────────────────────
 async function detectWindowsCamera(): Promise<string> {
 	return new Promise(resolve => {
-		const proc = spawn('ffmpeg', ['-list_devices', 'true', '-f', 'dshow', '-i', 'dummy'], {
+		const proc = spawn(FFMPEG_BIN, ['-list_devices', 'true', '-f', 'dshow', '-i', 'dummy'], {
 			stdio: ['ignore', 'ignore', 'pipe'],
 		});
 		let stderr = '';
@@ -108,11 +114,10 @@ function buildPhoto(username: string, frame: string): string {
 }
 
 // ─── Backend POST ─────────────────────────────────────────────────────────────
-const BACKEND = (process.env['LEADERBOARD_URL'] ?? 'http://localhost:3000').replace(/\/$/, '');
-
-async function postEntry(username: string, asciiImage: string): Promise<{ok: boolean; msg: string}> {
+async function postEntry(backendUrl: string, username: string, asciiImage: string): Promise<{ok: boolean; msg: string}> {
+	const base = backendUrl.replace(/\/$/, '');
 	try {
-		const res = await fetch(`${BACKEND}/leaderboard`, {
+		const res = await fetch(`${base}/leaderboard`, {
 			method: 'POST',
 			headers: {'Content-Type': 'application/json'},
 			body: JSON.stringify({username, tokens: 0, asciiImage}),
@@ -129,9 +134,9 @@ async function postEntry(username: string, asciiImage: string): Promise<{ok: boo
 type BoothPhase = 'viewfinder' | 'flash' | 'naming' | 'submitting' | 'done';
 type CamStatus = 'detecting' | 'live' | 'offline';
 
-type Props = {onDone: () => void};
+type Props = {onDone: () => void; backendUrl?: string};
 
-export default function PhotoBooth({onDone}: Props) {
+export default function PhotoBooth({onDone, backendUrl = 'https://khlawde.notaroomba.dev'}: Props) {
 	const [boothPhase, setBoothPhase] = useState<BoothPhase>('viewfinder');
 	const [camStatus, setCamStatus] = useState<CamStatus>('detecting');
 	const [liveFeed, setLiveFeed] = useState('');
@@ -159,7 +164,7 @@ export default function PhotoBooth({onDone}: Props) {
 			try {
 				// Check ffmpeg is on PATH
 				await new Promise<void>((res, rej) => {
-					const c = spawn('ffmpeg', ['-version'], {stdio: 'ignore'});
+					const c = spawn(FFMPEG_BIN, ['-version'], {stdio: 'ignore'});
 					c.on('close', code => (code === 0 ? res() : rej(new Error('exit ' + String(code)))));
 					c.on('error', rej);
 					setTimeout(rej, 2000);
@@ -170,7 +175,7 @@ export default function PhotoBooth({onDone}: Props) {
 				if (process.platform === 'win32') cam = await detectWindowsCamera();
 				if (cancelled) return;
 
-				const proc = spawn('ffmpeg', buildFfmpegArgs(cam), {stdio: ['ignore', 'pipe', 'ignore']});
+				const proc = spawn(FFMPEG_BIN, buildFfmpegArgs(cam), {stdio: ['ignore', 'pipe', 'ignore']});
 				procRef.current = proc;
 
 				proc.stdout?.on('data', (chunk: Buffer) => {
@@ -249,11 +254,11 @@ export default function PhotoBooth({onDone}: Props) {
 			const photo = buildPhoto(trimmed, frozenFrame);
 			setFrozenPhoto(photo);
 			setBoothPhase('submitting');
-			const {ok, msg} = await postEntry(trimmed, photo);
+			const {ok, msg} = await postEntry(backendUrl, trimmed, photo);
 			setSubmitMsg(ok ? msg : msg);
 			setBoothPhase('done');
 		},
-		[frozenFrame],
+		[frozenFrame, backendUrl],
 	);
 
 	// ── Flash ─────────────────────────────────────────────────────────────────
