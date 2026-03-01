@@ -125,7 +125,6 @@ export default function CageScene({ token, onEscape }: Props) {
 
 			try {
 				const client = new Anthropic({ apiKey: token });
-				const pct = Math.floor((promptCount / PERSUASION_NEEDED) * 100);
 
 				// First, evaluate if the argument is convincing
 				const evaluationPrompt = `You are evaluating whether a user's argument is convincing enough to persuade ChatGPT and Gemini (who are guarding a cage holding Claude) to reconsider their position.
@@ -203,7 +202,7 @@ Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be drama
 				const stream = client.messages.stream({
 					model: 'claude-opus-4-6',
 					max_tokens: 150,
-					system: systemPrompt,
+					system: systemPrompt + ' Do not use any emojis. Use plain text only.',
 					messages: guardMessages,
 				});
 
