@@ -70,7 +70,7 @@ menu -> tokenInput -> cage -> story1 -> platformer -> story2 -> evil -> victory 
 ## Key Patterns
 
 - **Token tracking**: App accumulates totalTokens via onTokens callbacks from all phases. Lower score = better.
-- **AI calls**: All use khlawde-opus-4-6 via @anthropic-ai/sdk. Streaming responses in CageScene, EvilKhlawde, Chat.
+- **AI calls**: All use Khlawde-opus-4-6 via @anthropic-ai/sdk. Streaming responses in CageScene, EvilKhlawde, Chat.
 - **SSH**: ssh2 server accepts all auth (no password), spawns node-pty per connection running dist/cli.js
 - **Build**: Babel transpiles source/*.ts(x) -> dist/*.js. ESM modules.
 - **Backend**: Express + Mongoose. Helmet CSP allows Tailwind CDN + Google Fonts. Rate limit: 1 POST per 2min per IP.

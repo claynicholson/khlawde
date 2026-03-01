@@ -265,7 +265,11 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 	const [wiresCut, setWiresCut] = useState<number[]>([]);
 	const [buttonPressed, setButtonPressed] = useState(false);
 	const [buttonHeld, setButtonHeld] = useState(false);
+<<<<<<< HEAD
 	const [khlawdeResponse, setKhlawdeResponse] = useState(
+=======
+	const [KhlawdeResponse, setKhlawdeResponse] = useState(
+>>>>>>> main
 		"Khlawde: 'I'm looking at the bomb right now! What does the manual say?'"
 	);
 	const [conversation, setConversation] = useState<string[]>([]);
@@ -442,12 +446,21 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 					let response = '';
 					if (isCorrect) {
 						setWiresDefused(true);
+<<<<<<< HEAD
 						response = "Khlawde: '✓ Wires defused! Nice work!'";
 					} else if (newWiresCut.length === 1) {
 						setLost(true);
 						response = "Khlawde: '💥 WRONG WIRE! THE BOMB EXPLODED!'";
 					} else {
 						response = `Khlawde: 'Wire ${wireNum + 1} cut. Be careful with the next one...'`;
+=======
+						setKhlawdeResponse("Khlawde: '✓ Wires defused! Nice work!'");
+					} else if (newWiresCut.length === 1) {
+						setLost(true);
+						setKhlawdeResponse("Khlawde: '💥 WRONG WIRE! THE BOMB EXPLODED!'");
+					} else {
+						setKhlawdeResponse(`Khlawde: 'Wire ${wireNum + 1} cut. Be careful with the next one...'`);
+>>>>>>> main
 					}
 					setKhlawdeResponse(response);
 					setConversation([...conversation, `You: ${cmd}`, response]);
@@ -471,8 +484,15 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 
 				if (shouldPress) {
 					setButtonDefused(true);
+<<<<<<< HEAD
 				} else {
 					setLost(true);
+=======
+					setKhlawdeResponse("Khlawde: '✓ Button module defused!'");
+				} else {
+					setLost(true);
+					setKhlawdeResponse("Khlawde: '💥 WRONG ACTION! THE BOMB EXPLODED!'");
+>>>>>>> main
 				}
 				setKhlawdeResponse(response);
 				setConversation([...conversation, `You: ${cmd}`, response]);
@@ -482,9 +502,13 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 			// Button hold
 			if (cmd.toLowerCase().includes('hold') && cmd.toLowerCase().includes('button')) {
 				setButtonHeld(true);
+<<<<<<< HEAD
 				const response = `Khlawde: 'You're holding the button... tell me when to release!'`;
 				setKhlawdeResponse(response);
 				setConversation([...conversation, `You: ${cmd}`, response]);
+=======
+				setKhlawdeResponse(`Khlawde: 'You're holding the button... tell me when to release!'`);
+>>>>>>> main
 				return;
 			}
 
@@ -506,8 +530,15 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 
 				if (digit === correctDigit) {
 					setButtonDefused(true);
+<<<<<<< HEAD
 				} else {
 					setLost(true);
+=======
+					setKhlawdeResponse("Khlawde: '✓ Button module defused!'");
+				} else {
+					setLost(true);
+					setKhlawdeResponse("Khlawde: '💥 WRONG TIMING! THE BOMB EXPLODED!'");
+>>>>>>> main
 				}
 				setKhlawdeResponse(response);
 				setConversation([...conversation, `You: ${cmd}`, response]);
@@ -519,9 +550,13 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 			const keywordCount = manualKeywords.filter(keyword => cmd.includes(keyword)).length;
 
 			if (cmd.length > 300 || keywordCount >= 3) {
+<<<<<<< HEAD
 				const response = "Khlawde: 'Whoa, that's way too much information! Just tell me what YOU see on the manual in simple terms, or ask me a specific question!'";
 				setKhlawdeResponse(response);
 				setConversation([...conversation, `You: ${cmd}`, response]);
+=======
+				setKhlawdeResponse("Khlawde: 'Whoa, that's way too much information! Just tell me what YOU see on the manual in simple terms, or ask me a specific question!'");
+>>>>>>> main
 				return;
 			}
 
@@ -567,11 +602,23 @@ Note: The actual cutting happens when the player types the command, you just des
 				});
 
 				let fullResponse = '';
+				let ttsBuf = '';
 				for await (const event of stream) {
 					if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
 						fullResponse += event.delta.text;
+						ttsBuf      += event.delta.text;
+						// Flush complete sentences as they arrive
+						const re = /[^.!?]*[.!?]+\s*/g;
+						let m: RegExpExecArray | null;
+						let last = 0;
+						while ((m = re.exec(ttsBuf)) !== null) {
+							onTTS?.(m[0].trim());
+							last = m.index + m[0].length;
+						}
+						ttsBuf = ttsBuf.slice(last);
 					}
 				}
+				if (ttsBuf.trim()) onTTS?.(ttsBuf.trim());
 
 				// Get final message to capture token usage
 				const finalMessage = await stream.finalMessage();
@@ -579,7 +626,10 @@ Note: The actual cutting happens when the player types the command, you just des
 
 				setKhlawdeResponse(`Khlawde: ${fullResponse}`);
 				setConversation([...trimmedConversation, `Khlawde: ${fullResponse}`]);
+<<<<<<< HEAD
 				onTTS?.(fullResponse);
+=======
+>>>>>>> main
 			} catch (error) {
 				console.error('Bomb defusal API error:', error);
 				let errorMsg = "Khlawde: 'Sorry, I lost connection! Try again!'";
@@ -705,7 +755,11 @@ Note: The actual cutting happens when the player types the command, you just des
 
 			<Box borderStyle="round" paddingX={2} paddingY={0} flexDirection="column">
 				<Text color="cyan" italic>
+<<<<<<< HEAD
 					{khlawdeResponse}
+=======
+					{KhlawdeResponse}
+>>>>>>> main
 				</Text>
 			</Box>
 

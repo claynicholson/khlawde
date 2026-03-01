@@ -1,5 +1,6 @@
-import React, { useState, useCallback } from 'react';
-import { Box, Text } from 'ink';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Box, Text, useApp } from 'ink';
+import Anthropic from '@anthropic-ai/sdk';
 import TextInput from 'ink-text-input';
 import TokenInput from './components/TokenInput.js';
 import CageScene from './components/CageScene.js';
@@ -8,7 +9,11 @@ import EvilKhlawde from './components/EvilKhlawde.js';
 import PhotoBooth from './components/PhotoBooth.js';
 import LeaderboardSubmit from './components/LeaderboardSubmit.js';
 import HomeMenu from './components/HomeMenu.js';
+<<<<<<< HEAD
 import { startMusic } from './utils/music.js';
+=======
+import {playTrack, PHASE_MUSIC} from './utils/music.js';
+>>>>>>> main
 import LeaderboardView from './components/LeaderboardView.js';
 import StoryInterstitial from './components/StoryInterstitial.js';
 import AudioSetup from './components/AudioSetup.js';
@@ -76,8 +81,6 @@ function VictoryScreen() {
 // ─── Root app ─────────────────────────────────────────────────────────────────
 type AppProps = { initialToken?: string; backendUrl?: string };
 
-startMusic();
-
 export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	const [token, setToken] = useState(
 		initialToken || process.env.ANTHROPIC_API_KEY || '',
@@ -91,6 +94,11 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	);
 	const [totalTokens, setTotalTokens] = useState(0);
 
+	useEffect(() => {
+		const track = PHASE_MUSIC[phase];
+		if (track) playTrack(track);
+	}, [phase]);
+
 	const addTokens = useCallback((count: number) => {
 		setTotalTokens(prev => prev + count);
 	}, []);
@@ -98,8 +106,16 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	// Push a TTS URL to the browser via the local HTTP server
 	const pushTTS = useCallback(async (text: string) => {
 		if (!audioCode) return;
-		const truncated = text.slice(0, 280);
-		const ttsUrl = `http://tts.cyzon.us/tts?text=${encodeURIComponent(truncated)}`;
+		const cleaned = text
+			.replace(/\*{1,2}([^*]+)\*{1,2}/g, '$1') // strip **bold** / *italic*
+			.replace(/["""''`]/g, '')                  // curly quotes, backticks
+			.replace(/[()\[\]{}<>]/g, '')              // brackets / parens
+			.replace(/[#@$%^&*_=+|\\~]/g, '')          // misc symbols
+			.replace(/\.{2,}/g, '.')                   // ellipsis → single period
+			.replace(/\s+/g, ' ')                      // collapse whitespace
+			.trim();
+		const truncated = cleaned.slice(0, 280);
+		const ttsUrl = `https://tts.cyzon.us/tts?text=${encodeURIComponent(truncated)}`;
 		try {
 			await fetch(`http://localhost:${audioPort}/push`, {
 				method: 'POST',
@@ -134,7 +150,7 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	}
 
 	if (phase === 'photo') {
-		return <PhotoBooth onDone={() => setPhase('menu')} backendUrl={resolvedBackendUrl} />;
+		return <PhotoBooth onDone={() => setPhase('leaderboard')} backendUrl={resolvedBackendUrl} />;
 	}
 
 	if (phase === 'tokenInput' || (!token && phase !== 'viewLeaderboard')) {
@@ -177,7 +193,7 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	}
 
 	if (phase === 'victory') {
-		setTimeout(() => setPhase('leaderboard'), 3500);
+		setTimeout(() => setPhase('photo'), 3500);
 		return <VictoryScreen />;
 	}
 
