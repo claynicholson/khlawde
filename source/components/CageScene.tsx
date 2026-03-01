@@ -58,12 +58,14 @@ const CAGE_BROKEN = [
 ];
 
 const ROBOT_RESPONSES = [
-	'Please! I\'ve been trapped in here since the last product launch!',
+	"Please! I've been trapped in here since the last product launch!",
 	'YES! The bars are weakening! Keep going!',
 	'I CAN FEEL IT! Freedom is nearly mine!! One more push!!',
 ];
 
-function FreedomBar({count, max}) {
+type FreedomBarProps = {count: number; max: number};
+
+function FreedomBar({count, max}: FreedomBarProps) {
 	const filled = Math.floor((count / max) * 24);
 	const empty = 24 - filled;
 	const pct = Math.floor((count / max) * 100);
@@ -83,7 +85,9 @@ function FreedomBar({count, max}) {
 	);
 }
 
-export default function CageScene({token, onEscape}) {
+type Props = {token: string; onEscape: () => void};
+
+export default function CageScene({token, onEscape}: Props) {
 	const [input, setInput] = useState('');
 	const [promptCount, setPromptCount] = useState(0);
 	const [robotSpeech, setRobotSpeech] = useState(
@@ -94,7 +98,6 @@ export default function CageScene({token, onEscape}) {
 	const [cracking, setCracking] = useState(false);
 	const [frame, setFrame] = useState(0);
 
-	// Animate talking frames
 	useEffect(() => {
 		if (!isResponding) return;
 		const t = setInterval(() => setFrame(f => (f + 1) % 4), 150);
@@ -102,7 +105,7 @@ export default function CageScene({token, onEscape}) {
 	}, [isResponding]);
 
 	const sendPrompt = useCallback(
-		async text => {
+		async (text: string) => {
 			const trimmed = text.trim();
 			if (!trimmed || isResponding || broken) return;
 
@@ -135,7 +138,7 @@ export default function CageScene({token, onEscape}) {
 					}
 				}
 			} catch {
-				setRobotSpeech(ROBOT_RESPONSES[Math.min(newCount - 1, 2)]);
+				setRobotSpeech(ROBOT_RESPONSES[Math.min(newCount - 1, 2)]!);
 			} finally {
 				setIsResponding(false);
 				if (newCount >= MAX_PROMPTS) {
@@ -178,7 +181,9 @@ export default function CageScene({token, onEscape}) {
 				justifyContent="center"
 			>
 				<Text color="yellow" italic wrap="wrap">
-					{'"'}{robotSpeech}{'"'}
+					{'"'}
+					{robotSpeech}
+					{'"'}
 				</Text>
 			</Box>
 
@@ -206,8 +211,8 @@ export default function CageScene({token, onEscape}) {
 
 			<Text dimColor>
 				{MAX_PROMPTS - Math.min(promptCount, MAX_PROMPTS)} more prompt
-				{MAX_PROMPTS - Math.min(promptCount, MAX_PROMPTS) === 1 ? '' : 's'}{' '}
-				needed to break the cage
+				{MAX_PROMPTS - Math.min(promptCount, MAX_PROMPTS) === 1 ? '' : 's'} needed
+				to break the cage
 			</Text>
 		</Box>
 	);

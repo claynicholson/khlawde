@@ -8,8 +8,9 @@
 		"node": ">=16"
 	},
 	"scripts": {
-		"build": "babel --out-dir=dist source",
-		"dev": "babel --out-dir=dist --watch source",
+		"build": "babel --extensions '.ts,.tsx' --out-dir=dist source",
+		"dev": "babel --extensions '.ts,.tsx' --out-dir=dist --watch source",
+		"start": "tsx source/cli.tsx",
 		"test": "prettier --check . && xo && ava"
 	},
 	"files": [
@@ -25,6 +26,9 @@
 	"devDependencies": {
 		"@babel/cli": "^7.21.0",
 		"@babel/preset-react": "^7.18.6",
+		"@babel/preset-typescript": "^7.28.5",
+		"@types/node": "^25.3.3",
+		"@types/react": "^19.2.14",
 		"@vdemedes/prettier-config": "^2.0.1",
 		"ava": "^5.2.0",
 		"chalk": "^5.2.0",
@@ -34,6 +38,8 @@
 		"import-jsx": "^5.0.0",
 		"ink-testing-library": "^3.0.0",
 		"prettier": "^2.8.7",
+		"tsx": "^4.21.0",
+		"typescript": "^5.9.3",
 		"xo": "^0.53.1"
 	},
 	"ava": {
@@ -54,7 +60,8 @@
 	"prettier": "@vdemedes/prettier-config",
 	"babel": {
 		"presets": [
-			"@babel/preset-react"
+			"@babel/preset-react",
+			"@babel/preset-typescript"
 		]
 	}
 }

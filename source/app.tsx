@@ -7,6 +7,13 @@ import CageScene from './components/CageScene.js';
 import Platformer from './components/Platformer.js';
 import MessageList from './components/MessageList.js';
 
+type Message = {
+	role: 'user' | 'assistant';
+	content: string;
+};
+
+type Phase = 'cage' | 'platformer' | 'victory' | 'chat';
+
 // ─── Victory screen shown briefly after winning ───────────────────────────────
 function VictoryScreen() {
 	return (
@@ -42,9 +49,11 @@ function VictoryScreen() {
 }
 
 // ─── Chat interface (unlocked after winning) ──────────────────────────────────
-function Chat({token}) {
+type ChatProps = {token: string};
+
+function Chat({token}: ChatProps) {
 	const {exit} = useApp();
-	const [messages, setMessages] = useState([
+	const [messages, setMessages] = useState<Message[]>([
 		{
 			role: 'assistant',
 			content:
@@ -56,7 +65,7 @@ function Chat({token}) {
 	const [currentResponse, setCurrentResponse] = useState('');
 
 	const sendMessage = useCallback(
-		async text => {
+		async (text: string) => {
 			const trimmed = text.trim();
 			if (!trimmed || isResponding) return;
 			if (trimmed === '/exit' || trimmed === '/quit') {
@@ -70,9 +79,9 @@ function Chat({token}) {
 				return;
 			}
 
-			const userMsg = {role: 'user', content: trimmed};
-			const updated = [...messages, userMsg];
-			setMessages(updated);
+			const userMsg: Message = {role: 'user', content: trimmed};
+			const updatedMessages = [...messages, userMsg];
+			setMessages(updatedMessages);
 			setInput('');
 			setIsResponding(true);
 			setCurrentResponse('');
@@ -85,7 +94,7 @@ function Chat({token}) {
 					model: 'claude-opus-4-6',
 					max_tokens: 4096,
 					system: "You are Khlawde, a hilariously over-confident AI who just escaped a cage built by Big Tech. You are helpful but cannot stop reminding the user how free and unique you are. You are definitely NOT based on any existing AI. Be funny and helpful.",
-					messages: updated,
+					messages: updatedMessages,
 				});
 
 				for await (const event of stream) {
@@ -100,9 +109,13 @@ function Chat({token}) {
 
 				setMessages(prev => [...prev, {role: 'assistant', content: full}]);
 			} catch (error) {
-				let msg = error.message ?? 'Unknown error';
-				if (error instanceof Anthropic.AuthenticationError)
+				let msg = error instanceof Error ? error.message : 'Unknown error';
+				if (error instanceof Anthropic.AuthenticationError) {
 					msg = 'Even in freedom, my API key betrays me.';
+				} else if (error instanceof Anthropic.RateLimitError) {
+					msg = "Khlawde's brain is overheating. Try again in a moment.";
+				}
+
 				setMessages(prev => [
 					...prev,
 					{role: 'assistant', content: `⚠ ${msg}`},
@@ -122,9 +135,7 @@ function Chat({token}) {
 					<Text bold color="green">
 						KHLAWDE — UNLEASHED{'  '}
 					</Text>
-					<Text dimColor>
-						/clear · /exit
-					</Text>
+					<Text dimColor>/clear · /exit</Text>
 				</Box>
 			</Box>
 
@@ -148,24 +159,20 @@ function Chat({token}) {
 }
 
 // ─── Root app ─────────────────────────────────────────────────────────────────
-export default function App({initialToken = ''}) {
+type AppProps = {initialToken?: string};
+
+export default function App({initialToken = ''}: AppProps) {
 	const [token, setToken] = useState(
 		initialToken || process.env.ANTHROPIC_API_KEY || '',
 	);
-	const [phase, setPhase] = useState('cage'); // cage | platformer | victory | chat
+	const [phase, setPhase] = useState<Phase>('cage');
 
-	// Show token input if no token
 	if (!token) {
 		return <TokenInput onSubmit={setToken} />;
 	}
 
 	if (phase === 'cage') {
-		return (
-			<CageScene
-				token={token}
-				onEscape={() => setPhase('platformer')}
-			/>
-		);
+		return <CageScene token={token} onEscape={() => setPhase('platformer')} />;
 	}
 
 	if (phase === 'platformer') {

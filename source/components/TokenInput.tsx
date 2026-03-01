@@ -2,11 +2,15 @@ import React, {useState} from 'react';
 import {Box, Text} from 'ink';
 import TextInput from 'ink-text-input';
 
-export default function TokenInput({onSubmit}) {
+type Props = {
+	onSubmit: (token: string) => void;
+};
+
+export default function TokenInput({onSubmit}: Props) {
 	const [value, setValue] = useState('');
 	const [error, setError] = useState('');
 
-	const handleSubmit = val => {
+	const handleSubmit = (val: string) => {
 		const trimmed = val.trim();
 		if (!trimmed) {
 			setError('You need a token. Khlawde runs on vibes AND API keys.');
