@@ -125,20 +125,41 @@ export default function Platformer({onWin}: Props) {
 		return () => clearInterval(t);
 	}, [won, onWin]);
 
-	useInput((input, key) => {
-		if (wonRef.current) return;
-		const p = pRef.current;
+	// Keeps Ink's stdin in raw mode so data events flow to our listener below
+	useInput(() => {});
 
-		if (key.leftArrow) {
-			pRef.current = {...p, x: Math.max(0, p.x - MOVE_SPEED), right: false};
-		} else if (key.rightArrow) {
-			pRef.current = {...p, x: Math.min(W - 1, p.x + MOVE_SPEED), right: true};
-		} else if ((key.upArrow || input === ' ') && p.onGround) {
-			pRef.current = {...p, vy: JUMP_FORCE, onGround: false};
-		}
+	useEffect(() => {
+		if (process.stdin.isTTY) process.stdin.setRawMode(true);
+		process.stdin.resume();
 
-		rerender(n => n + 1);
-	});
+		const onData = (data: Buffer) => {
+			if (wonRef.current) return;
+			const p = pRef.current;
+			const str = data.toString();
+
+			if (str === '\x1b[D' || str === 'a') {
+				// left arrow or a
+				pRef.current = {...p, x: Math.max(0, p.x - MOVE_SPEED), right: false};
+				rerender(n => n + 1);
+			} else if (str === '\x1b[C' || str === 'd') {
+				// right arrow or d
+				pRef.current = {...p, x: Math.min(W - 1, p.x + MOVE_SPEED), right: true};
+				rerender(n => n + 1);
+			} else if ((str === '\x1b[A' || str === 'w' || str === ' ') && p.onGround) {
+				// up arrow, w, or space
+				pRef.current = {...p, vy: JUMP_FORCE, onGround: false};
+				rerender(n => n + 1);
+			} else if (str === '\x03') {
+				// Ctrl+C
+				process.exit(0);
+			}
+		};
+
+		process.stdin.on('data', onData);
+		return () => {
+			process.stdin.removeListener('data', onData);
+		};
+	}, []);
 
 	const rows = buildFrame(pRef.current, won);
 
