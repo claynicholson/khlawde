@@ -10,6 +10,7 @@ import PhotoBooth from './components/PhotoBooth.js';
 import MessageList from './components/MessageList.js';
 import LeaderboardSubmit from './components/LeaderboardSubmit.js';
 import HomeMenu from './components/HomeMenu.js';
+import {startMusic} from './utils/music.js';
 import LeaderboardView from './components/LeaderboardView.js';
 import StoryInterstitial from './components/StoryInterstitial.js';
 
@@ -191,6 +192,8 @@ function Chat({ token }: ChatProps) {
 
 // ─── Root app ─────────────────────────────────────────────────────────────────
 type AppProps = { initialToken?: string; backendUrl?: string };
+
+startMusic();
 
 export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	const [token, setToken] = useState(
