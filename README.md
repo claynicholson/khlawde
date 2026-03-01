@@ -197,9 +197,9 @@ Ports exposed:
 
 KHLAWDE supports live text-to-speech and background music streamed to a browser tab while you play in the terminal.
 
-1. Open `https://khlawde.notaroomba.dev/listen?code=YOUR_CODE` in a browser.
+1. Open `https://khlawde.notaroomba.dev/connect?code=YOUR_CODE` in a browser.
 2. When you start the game over SSH, an audio setup screen will display your session code.
-3. Enter the code on the listen page. Audio will sync automatically once your SSH session begins.
+3. Enter the code on the connect page. Audio will sync automatically once your SSH session begins.
 
 The browser tab plays:
 - Background music that changes per game phase

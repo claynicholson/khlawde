@@ -146,7 +146,7 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	}
 
 	if (phase === 'photo') {
-		return <PhotoBooth onDone={() => setPhase('leaderboard')} backendUrl={resolvedBackendUrl} />;
+		return <PhotoBooth onDone={() => setPhase('leaderboard')} backendUrl={resolvedBackendUrl} audioCode={audioCode} audioPort={audioPort} />;
 	}
 
 	if (phase === 'tokenInput' || (!token && phase !== 'viewLeaderboard')) {

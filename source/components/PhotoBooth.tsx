@@ -132,11 +132,11 @@ async function postEntry(backendUrl: string, username: string, asciiImage: strin
 
 // ─── Component ────────────────────────────────────────────────────────────────
 type BoothPhase = 'viewfinder' | 'flash' | 'naming' | 'submitting' | 'done';
-type CamStatus = 'detecting' | 'live' | 'offline';
+type CamStatus = 'detecting' | 'live' | 'offline' | 'web-requesting' | 'web-live';
 
-type Props = { onDone: () => void; backendUrl?: string };
+type Props = { onDone: () => void; backendUrl?: string; audioCode?: string; audioPort?: string };
 
-export default function PhotoBooth({ onDone, backendUrl = 'https://khlawde.notaroomba.dev' }: Props) {
+export default function PhotoBooth({ onDone, backendUrl = 'https://khlawde.notaroomba.dev', audioCode = '', audioPort = '3000' }: Props) {
 	const [boothPhase, setBoothPhase] = useState<BoothPhase>('viewfinder');
 	const [camStatus, setCamStatus] = useState<CamStatus>('detecting');
 	const [liveFeed, setLiveFeed] = useState('');
@@ -159,8 +159,15 @@ export default function PhotoBooth({ onDone, backendUrl = 'https://khlawde.notar
 	// ── Camera init ───────────────────────────────────────────────────────────
 	useEffect(() => {
 		let cancelled = false;
+		const isServer = process.env['SERVER'] === 'true';
 
 		(async () => {
+			// On the server (SSH), skip local ffmpeg camera entirely — use web camera
+			if (isServer) {
+				tryWebCamera();
+				return;
+			}
+
 			try {
 				// Check ffmpeg is on PATH
 				await new Promise<void>((res, rej) => {
@@ -191,30 +198,81 @@ export default function PhotoBooth({ onDone, backendUrl = 'https://khlawde.notar
 				});
 
 				proc.on('error', () => {
-					if (!cancelled) setCam('offline');
+					if (!cancelled) tryWebCamera();
 				});
 				proc.on('close', code => {
-					if (!cancelled && code !== 0 && camStatusRef.current !== 'live') setCam('offline');
+					if (!cancelled && code !== 0 && camStatusRef.current !== 'live') tryWebCamera();
 				});
 
-				// Give 4s to produce first frame
+				// Give 4s to produce first frame, then fall back to web camera
 				setTimeout(() => {
-					if (!cancelled && camStatusRef.current === 'detecting') setCam('offline');
+					if (!cancelled && camStatusRef.current === 'detecting') tryWebCamera();
 				}, 4000);
 			} catch {
-				if (!cancelled) setCam('offline');
+				if (!cancelled) tryWebCamera();
 			}
 		})();
+
+		function tryWebCamera() {
+			if (audioCode) {
+				setCam('web-requesting');
+				// Request the browser to start camera
+				fetch(`http://localhost:${audioPort}/camera-start`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ code: audioCode }),
+				}).catch(() => {
+					setCam('offline');
+				});
+			} else {
+				setCam('offline');
+			}
+		}
 
 		return () => {
 			cancelled = true;
 			procRef.current?.kill();
+			// Stop web camera on unmount
+			if (audioCode) {
+				fetch(`http://localhost:${audioPort}/camera-stop`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ code: audioCode }),
+				}).catch(() => {});
+			}
 		};
-	}, []);
+	}, [audioCode, audioPort]);
+
+	// ── Web camera frame polling ──────────────────────────────────────────────
+	useEffect(() => {
+		if (camStatus !== 'web-requesting' && camStatus !== 'web-live') return;
+		if (!audioCode) return;
+
+		let done = false;
+		const poll = async () => {
+			if (done) return;
+			try {
+				const res = await fetch(`http://localhost:${audioPort}/camera-frame?code=${audioCode}`);
+				const data = (await res.json()) as { frame: string | null };
+				if (data.frame && !done) {
+					setCam('web-live');
+					setLiveFeed(data.frame);
+				}
+			} catch {}
+		};
+
+		const interval = setInterval(poll, 300);
+		poll(); // immediate first poll
+
+		return () => {
+			done = true;
+			clearInterval(interval);
+		};
+	}, [camStatus, audioCode, audioPort]);
 
 	// Fake tick (used when camera offline)
 	useEffect(() => {
-		if (camStatus === 'live' || boothPhase !== 'viewfinder') return;
+		if (camStatus === 'live' || camStatus === 'web-live' || boothPhase !== 'viewfinder') return;
 		const t = setInterval(() => setTick(n => n + 1), 200);
 		return () => clearInterval(t);
 	}, [camStatus, boothPhase]);
@@ -230,9 +288,18 @@ export default function PhotoBooth({ onDone, backendUrl = 'https://khlawde.notar
 	useInput(
 		(_in, key) => {
 			if (boothPhase === 'viewfinder' && key.return) {
-				const frame = camStatus === 'live' ? liveFeed : fakeFrame(tick);
+				const isLiveCam = camStatus === 'live' || camStatus === 'web-live';
+				const frame = isLiveCam ? liveFeed : fakeFrame(tick);
 				setFrozenFrame(frame);
-				procRef.current?.kill(); // stop camera
+				procRef.current?.kill(); // stop local camera
+				// Stop web camera on snap
+				if (audioCode && camStatus === 'web-live') {
+					fetch(`http://localhost:${audioPort}/camera-stop`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ code: audioCode }),
+					}).catch(() => {});
+				}
 				setBoothPhase('flash');
 			}
 
@@ -319,11 +386,19 @@ export default function PhotoBooth({ onDone, backendUrl = 'https://khlawde.notar
 	}
 
 	// ── Viewfinder ────────────────────────────────────────────────────────────
-	const frame = camStatus === 'live' ? liveFeed : fakeFrame(tick);
+	const isLive = camStatus === 'live' || camStatus === 'web-live';
+	const frame = isLive ? liveFeed : fakeFrame(tick);
 	const frameLines = frame.split('\n');
-	const isLive = camStatus === 'live';
 	const snapBlink = tick % 2 === 0 || isLive;
-	const statusLabel = isLive ? '[● LIVE CAMERA]' : camStatus === 'detecting' ? '[◌ DETECTING.. ]' : '[○ SIMULATED   ]';
+	const statusLabel = camStatus === 'live'
+		? '[● LIVE CAMERA]'
+		: camStatus === 'web-live'
+			? '[● WEB CAMERA ]'
+			: camStatus === 'web-requesting'
+				? '[◌ WEB CAM... ]'
+				: camStatus === 'detecting'
+					? '[◌ DETECTING.. ]'
+					: '[○ SIMULATED   ]';
 
 	return (
 		<Box flexDirection="column" padding={1} gap={1} alignItems="center">
@@ -341,9 +416,15 @@ export default function PhotoBooth({ onDone, backendUrl = 'https://khlawde.notar
 				<Text color="yellow">{'╚' + '═'.repeat(VIEW_W + 2) + '╝'}</Text>
 			</Box>
 
+			{camStatus === 'web-requesting' && (
+				<Text color="yellow">
+					Waiting for camera... Enable it in your browser tab!
+				</Text>
+			)}
+
 			{!isLive && camStatus === 'offline' && (
 				<Text dimColor>
-					ffmpeg/webcam not found — showing simulation (install ffmpeg to enable live feed)
+					ffmpeg/webcam not found — showing simulation{audioCode ? '' : ' (connect via SSH for web camera)'}
 				</Text>
 			)}
 

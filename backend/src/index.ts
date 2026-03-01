@@ -45,7 +45,7 @@ app.use(express.json({limit: '16kb'}));
 // ─── Audio session management ─────────────────────────────────────────────────
 
 // Sessions registered by the SSH server: code -> browser state
-const sessions = new Map<string, {browserWs: any; audioUnlocked: boolean}>();
+const sessions = new Map<string, {browserWs: any; audioUnlocked: boolean; cameraFrame: string | null; cameraActive: boolean}>();
 
 // SSH server registers a new session code
 app.post('/sessions', (req, res) => {
@@ -55,7 +55,7 @@ app.post('/sessions', (req, res) => {
 		return;
 	}
 
-	sessions.set(code, {browserWs: null, audioUnlocked: false});
+	sessions.set(code, {browserWs: null, audioUnlocked: false, cameraFrame: null, cameraActive: false});
 	res.status(201).json({ok: true});
 });
 
@@ -82,6 +82,50 @@ app.post('/push', (req, res) => {
 	}
 
 	res.json({ok: true});
+});
+
+// CLI requests the browser to start camera capture
+app.post('/camera-start', (req, res) => {
+	const {code} = req.body as {code: string};
+	const session = sessions.get(code);
+	if (!session) {
+		res.status(404).json({error: 'No session'});
+		return;
+	}
+
+	session.cameraActive = true;
+	if (session.browserWs?.readyState === 1) {
+		session.browserWs.send(JSON.stringify({type: 'camera_request'}));
+	}
+
+	res.json({ok: true});
+});
+
+// CLI stops the browser camera
+app.post('/camera-stop', (req, res) => {
+	const {code} = req.body as {code: string};
+	const session = sessions.get(code);
+	if (session) {
+		session.cameraActive = false;
+		session.cameraFrame = null;
+		if (session.browserWs?.readyState === 1) {
+			session.browserWs.send(JSON.stringify({type: 'camera_stop'}));
+		}
+	}
+
+	res.json({ok: true});
+});
+
+// CLI polls for the latest camera frame (ASCII art string)
+app.get('/camera-frame', (req, res) => {
+	const code = (req.query['code'] as string) ?? '';
+	const session = sessions.get(code);
+	if (!session || !session.cameraFrame) {
+		res.json({frame: null});
+		return;
+	}
+
+	res.json({frame: session.cameraFrame});
 });
 
 // Proxy TTS audio to avoid CORS issues — only allows tts.cyzon.us
@@ -131,9 +175,9 @@ app.get('/', (_req, res) => {
 	res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
-// Explicit /listen route (static serves it as /listen.html, this handles the clean URL)
-app.get('/listen', (_req, res) => {
-	res.sendFile(path.join(frontendPath, 'listen.html'));
+// Explicit /connect route (static serves it as /connect.html, this handles the clean URL)
+app.get('/connect', (_req, res) => {
+	res.sendFile(path.join(frontendPath, 'connect.html'));
 });
 
 // Music asset served from the SSH server's assets directory
@@ -181,6 +225,10 @@ wss.on('connection', (ws: any, req: http.IncomingMessage) => {
 			const msg = JSON.parse(data.toString());
 			if (msg.type === 'audio_unlocked') {
 				session.audioUnlocked = true;
+			} else if (msg.type === 'camera_frame' && typeof msg.frame === 'string') {
+				session.cameraFrame = msg.frame;
+			} else if (msg.type === 'camera_ready') {
+				session.cameraActive = true;
 			}
 		} catch {}
 	});

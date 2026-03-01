@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>khlawde :: audio</title>
+<title>khlawde :: connect</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -80,6 +80,45 @@ body {
 }
 #autoplay-overlay button:hover { background: #00ff41; color: #0a0a0a; }
 
+/* Camera capture overlay */
+#camera-section {
+  display: none;
+  margin-top: 1.5rem;
+  border-top: 1px solid #333;
+  padding-top: 1rem;
+}
+#camera-section.active { display: block; }
+#camera-btn {
+  background: #0a0a0a;
+  color: #ff6600;
+  border: 1px solid #ff6600;
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.75rem 2rem;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+#camera-btn:hover { background: #ff6600; color: #0a0a0a; }
+#camera-btn:disabled { opacity: 0.4; cursor: default; }
+#camera-status {
+  font-size: 0.8rem;
+  color: #ff6600;
+  margin-top: 0.5rem;
+}
+#camera-preview {
+  display: none;
+  margin-top: 0.5rem;
+  font-size: 0.4rem;
+  line-height: 0.45rem;
+  letter-spacing: 0;
+  color: #00ff41;
+  white-space: pre;
+  font-family: monospace;
+  overflow: hidden;
+}
+#camera-preview.active { display: block; }
+
 /* Music volume indicator */
 .vol-bar {
   display: flex;
@@ -110,7 +149,7 @@ body {
 </div>
 
 <div class="terminal">
-  <div class="title">[ KHLAWDE :: AUDIO STREAM ]</div>
+  <div class="title">[ KHLAWDE :: CONNECT ]</div>
 
   <div class="status waiting" id="status">
     <span class="blink">&#9646;</span>&nbsp;Connecting to server...
@@ -124,6 +163,15 @@ body {
   </div>
 
   <div class="hint" id="hint"></div>
+
+  <div id="camera-section">
+    <div style="color: #ff6600; font-weight: bold; margin-bottom: 0.75rem;">[ CAMERA REQUESTED ]</div>
+    <div style="color: #888; font-size: 0.8rem; margin-bottom: 0.75rem;">The game needs your camera for a photo. Click below to enable it.</div>
+    <button id="camera-btn">&#128247; Enable Camera</button>
+    <div id="camera-status"></div>
+    <div id="camera-preview"></div>
+  </div>
+
   <div class="log" id="log"></div>
 </div>
 
@@ -317,6 +365,10 @@ function connect() {
         const text = decodeURIComponent(msg.url.split('text=')[1] || '').slice(0, 60);
         log('TTS queued: ' + text + ' (queue len: ' + (ttsQueue.length + 1) + ')');
         enqueueTTS('/tts-proxy?url=' + encodeURIComponent(msg.url));
+      } else if (msg.type === 'camera_request') {
+        showCameraRequest();
+      } else if (msg.type === 'camera_stop') {
+        hideCameraSection();
       }
     } catch (err) {
       log('parse error: ' + err.message);
@@ -339,6 +391,120 @@ function connect() {
 }
 
 if (code) connect();
+
+// ── Camera capture ─────────────────────────────────────────────────────────────────────
+
+const CAM_W = 100;
+const CAM_H = 40;
+const ASCII_CHARS = ' .,:+*#%@';
+
+const cameraSec    = document.getElementById('camera-section');
+const cameraBtn    = document.getElementById('camera-btn');
+const cameraStatus = document.getElementById('camera-status');
+const cameraPreview = document.getElementById('camera-preview');
+
+let cameraStream   = null;
+let cameraInterval = null;
+let cameraCanvas   = null;
+let cameraCtx      = null;
+let cameraVideo    = null;
+
+function showCameraRequest() {
+  cameraSec.classList.add('active');
+  cameraStatus.textContent = 'Waiting for you to enable camera...';
+  log('camera requested by game');
+}
+
+function hideCameraSection() {
+  cameraSec.classList.remove('active');
+  stopCamera();
+}
+
+function stopCamera() {
+  if (cameraInterval) { clearInterval(cameraInterval); cameraInterval = null; }
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+  if (cameraVideo) { cameraVideo.remove(); cameraVideo = null; }
+  cameraPreview.classList.remove('active');
+  cameraPreview.textContent = '';
+}
+
+function rgbToAscii(imageData) {
+  const data = imageData.data; // RGBA
+  const lines = [];
+  for (let y = 0; y < CAM_H; y++) {
+    let row = '';
+    for (let x = 0; x < CAM_W; x++) {
+      // Mirror horizontally for selfie view
+      const mx = CAM_W - 1 - x;
+      const i = (y * CAM_W + mx) * 4;
+      const luma = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+      row += ASCII_CHARS[Math.min(Math.floor((luma / 255) * ASCII_CHARS.length), ASCII_CHARS.length - 1)];
+    }
+    lines.push(row);
+  }
+  return lines.join('\n');
+}
+
+function captureAndSend() {
+  if (!cameraVideo || !cameraCtx || !globalWs || globalWs.readyState !== 1) return;
+  cameraCtx.drawImage(cameraVideo, 0, 0, CAM_W, CAM_H);
+  const imageData = cameraCtx.getImageData(0, 0, CAM_W, CAM_H);
+  const ascii = rgbToAscii(imageData);
+  cameraPreview.textContent = ascii;
+  globalWs.send(JSON.stringify({ type: 'camera_frame', frame: ascii }));
+}
+
+async function enableCamera() {
+  cameraBtn.disabled = true;
+  cameraStatus.textContent = 'Requesting camera access...';
+  log('requesting getUserMedia');
+
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 320 }, height: { ideal: 240 }, facingMode: 'user' },
+      audio: false
+    });
+
+    // Hidden video element to source frames from
+    cameraVideo = document.createElement('video');
+    cameraVideo.srcObject = cameraStream;
+    cameraVideo.setAttribute('playsinline', 'true');
+    cameraVideo.style.display = 'none';
+    document.body.appendChild(cameraVideo);
+    await cameraVideo.play();
+
+    // Offscreen canvas for pixel extraction
+    cameraCanvas = document.createElement('canvas');
+    cameraCanvas.width = CAM_W;
+    cameraCanvas.height = CAM_H;
+    cameraCtx = cameraCanvas.getContext('2d', { willReadFrequently: true });
+
+    cameraPreview.classList.add('active');
+    cameraStatus.textContent = 'Camera active — streaming to game...';
+    cameraBtn.textContent = '\u25cf Camera ON';
+    cameraBtn.style.color = '#00ff41';
+    cameraBtn.style.borderColor = '#00ff41';
+    log('camera active, streaming at 3fps');
+
+    // Notify server camera is ready
+    if (globalWs && globalWs.readyState === 1) {
+      globalWs.send(JSON.stringify({ type: 'camera_ready' }));
+    }
+
+    // Capture at ~3 fps
+    cameraInterval = setInterval(captureAndSend, 333);
+
+  } catch (err) {
+    cameraStatus.textContent = 'Camera error: ' + err.message;
+    cameraBtn.disabled = false;
+    log('camera error: ' + err.message);
+  }
+}
+
+cameraBtn.addEventListener('click', enableCamera);
 </script>
 </body>
 </html>
