@@ -1,24 +1,29 @@
-import { Server } from 'ssh2';
+import ssh2 from 'ssh2';
 import { readFileSync, existsSync, writeFileSync } from 'fs';
 import { execSync } from 'child_process';
-import * as pty from 'node-pty';
+import pty from 'node-pty';
+
+const { Server } = ssh2;
 
 const SSH_PORT = parseInt(process.env.SSH_PORT || '2222', 10);
-const HOST_KEY_PATH = process.env.SSH_HOST_KEY_PATH || '/app/ssh_host_ed25519_key';
+const HOST_KEY_PATH = process.env.SSH_HOST_KEY_PATH || '/app/ssh_host_rsa_key';
 
 // Persist host key across deploys via env var, or generate one
 if (process.env.SSH_HOST_KEY_BASE64) {
 	writeFileSync(HOST_KEY_PATH, Buffer.from(process.env.SSH_HOST_KEY_BASE64, 'base64'));
 } else if (!existsSync(HOST_KEY_PATH)) {
-	execSync(`ssh-keygen -t ed25519 -f ${HOST_KEY_PATH} -N ""`);
+	execSync(`ssh-keygen -t rsa -f ${HOST_KEY_PATH} -N ""`);
 }
+
+const hostKey = readFileSync(HOST_KEY_PATH);
 
 const server = new Server(
 	{
-		hostKeys: [readFileSync(HOST_KEY_PATH)],
+		hostKeys: [hostKey],
 	},
 	(client) => {
 		client.on('authentication', (ctx) => {
+			// Accept ALL auth methods including 'none' — no password prompt
 			ctx.accept();
 		});
 
@@ -29,7 +34,7 @@ const server = new Server(
 
 				session.on('pty', (accept, _reject, info) => {
 					ptyInfo = { cols: info.cols, rows: info.rows, term: info.term };
-					accept?.();
+					if (accept) accept();
 				});
 
 				session.on('shell', (accept) => {
@@ -65,7 +70,7 @@ const server = new Server(
 					// Handle terminal resize
 					session.on('window-change', (accept, _reject, info) => {
 						shell.resize(info.cols, info.rows);
-						accept?.();
+						if (accept) accept();
 					});
 
 					// Clean up
