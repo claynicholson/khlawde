@@ -12,6 +12,7 @@ const TRACKS = {
 	bringItIn:   join(ASSETS, "Bring It In, Guys!.mp3"),
 	megalovania: join(ASSETS, 'MEGALOVANIA.mp3'),
 	spear:       join(ASSETS, 'Spear of Justice.mp3'),
+	spiderDance: join(ASSETS, 'Spider Dance.mp3'),
 } as const;
 
 // Phase → track mapping
@@ -20,9 +21,9 @@ export const PHASE_MUSIC: Record<string, string> = {
 	viewLeaderboard: TRACKS.raining,
 	tokenInput:      TRACKS.raining,
 	audioSetup:      TRACKS.raining,
-	cage:            TRACKS.raining,
-	story1:          TRACKS.raining,
-	platformer:      TRACKS.bringItIn,
+	cage:            TRACKS.bringItIn,
+	story1:          TRACKS.bringItIn,
+	platformer:      TRACKS.spiderDance,
 	story2:          TRACKS.megalovania,
 	evil:            TRACKS.megalovania,
 	victory:         TRACKS.spear,
@@ -35,7 +36,6 @@ let proc: ChildProcess | null = null;
 let currentTrack = '';
 
 function spawnTrack(file: string): ChildProcess {
-	// On the server, music is streamed to the browser — no local player needed
 	if (process.env['SERVER'] === 'true') {
 		return spawn('true', [], {stdio: 'ignore'});
 	}
@@ -63,6 +63,7 @@ function spawnTrack(file: string): ChildProcess {
 }
 
 export function playTrack(file: string): void {
+	if (process.env['SERVER'] === 'true') return;
 	if (file === currentTrack && proc) return; // already playing this track
 
 	proc?.kill();
@@ -74,7 +75,7 @@ export function playTrack(file: string): void {
 		const child = spawnTrack(file);
 		proc = child;
 		child.on('exit', () => {
-			proc = null;
+			if (proc === child) proc = null; // only clear if still our process
 			if (currentTrack === file) launch(); // loop
 		});
 	}

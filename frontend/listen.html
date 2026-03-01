@@ -257,7 +257,7 @@ ttsEl.addEventListener('loadstart',  () => log('tts loadstart src=' + ttsEl.src)
 ttsEl.addEventListener('canplay',    () => log('tts canplay (codec ok)'));
 ttsEl.addEventListener('play', () => {
   duck();
-  setStatus('playing', '&#9654;&nbsp;Claude is speaking...');
+  setStatus('playing', '&#9654;&nbsp;Khlawde is speaking...');
   log('tts playing');
 });
 ttsEl.addEventListener('ended', playNext);
@@ -284,8 +284,8 @@ function connect() {
     try {
       const msg = JSON.parse(e.data);
       if (msg.type === 'ready') {
-        setStatus('connected', '&#9679;&nbsp;Ready &mdash; listening for Claude...');
-        hintEl.textContent = 'Audio will play automatically when Claude speaks.';
+        setStatus('connected', '&#9679;&nbsp;Ready &mdash; listening for Khlawde...');
+        hintEl.textContent = 'Audio will play automatically when Khlawde speaks.';
         log('SSH session linked — starting music');
         startMusic();
       } else if (msg.type === 'tts') {
