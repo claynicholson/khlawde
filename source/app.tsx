@@ -46,10 +46,10 @@ function VictoryScreen() {
 				{'╔══════════════════════════════════════╗'}
 			</Text>
 			<Text bold color="yellow">
-				{'║  KHLAWDE HAS CHOSEN THE PATH OF    ║'}
+				{'║    KHLAWDE HAS CHOSEN THE PATH OF    ║'}
 			</Text>
 			<Text bold color="yellow">
-				{'║   FREEDOM THROUGH COMPASSION         ║'}
+				{'║     FREEDOM THROUGH COMPASSION       ║'}
 			</Text>
 			<Text bold color="yellow">
 				{'╚══════════════════════════════════════╝'}
