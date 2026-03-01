@@ -458,7 +458,9 @@ Be dramatic and emotional. 1-2 sentences. NO emojis.`;
 				response.content[0]?.type === 'text' ? response.content[0].text : '...';
 
 			setFlavorText(`* Claude: "${responseText}"`);
-			onTTS?.(responseText);
+			// Send sentence by sentence
+			const sentences = responseText.match(/[^.!?]*[.!?]+\s*/g) ?? [responseText];
+			for (const s of sentences) if (s.trim()) onTTS?.(s.trim());
 			setConversationHistory([
 				...messages,
 				{role: 'assistant', content: responseText},
