@@ -1,9 +1,17 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import express from 'express';
 import mongoose from 'mongoose';
 import helmet from 'helmet';
 import cors from 'cors';
 import leaderboardRouter from './routes/leaderboard.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Load .env from backend/ first, then fall back to root
+dotenv.config();
+dotenv.config({path: path.resolve(__dirname, '../../.env')});
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -21,8 +29,12 @@ app.use(express.json({limit: '16kb'}));
 
 app.use('/leaderboard', leaderboardRouter);
 
+// Serve frontend static files
+const frontendPath = path.resolve(__dirname, '../../frontend');
+app.use(express.static(frontendPath));
+
 app.get('/', (_req, res) => {
-	res.json({status: 'ok', message: 'Khlawde leaderboard API'});
+	res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
 async function start() {
