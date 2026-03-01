@@ -23,7 +23,18 @@ if (!MONGO_URI) {
 }
 
 app.set('trust proxy', 1);
-app.use(helmet());
+app.use(helmet({
+	contentSecurityPolicy: {
+		directives: {
+			defaultSrc: ["'self'"],
+			scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
+			styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+			fontSrc: ["'self'", "https://fonts.gstatic.com"],
+			connectSrc: ["'self'", "https://khlawde.notaroomba.dev"],
+			imgSrc: ["'self'", "data:"],
+		},
+	},
+}));
 app.use(cors());
 app.use(express.json({limit: '16kb'}));
 
