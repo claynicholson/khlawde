@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 
@@ -24,9 +24,12 @@ export default function LeaderboardSubmit({ tokens, backendUrl, onDone }: Props)
 	const [username, setUsername] = useState('');
 	const [status, setStatus] = useState<Status>('input');
 	const [errorMsg, setErrorMsg] = useState('');
+	const inFlight = useRef(false);
 
 	const submit = useCallback(
 		async (text: string) => {
+			if (inFlight.current) return;
+			inFlight.current = true;
 			const trimmed = text.trim();
 
 			if (trimmed === '/skip') {
@@ -65,7 +68,8 @@ export default function LeaderboardSubmit({ tokens, backendUrl, onDone }: Props)
 			} catch (err) {
 				setStatus('error');
 				setErrorMsg(err instanceof Error ? err.message : 'Failed to submit');
-				setTimeout(() => setStatus('input'), 3000);
+				setTimeout(() => { setStatus('input'); inFlight.current = false; }, 3000);
+				return;
 			}
 		},
 		[tokens, backendUrl, onDone],
