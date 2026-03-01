@@ -9,11 +9,7 @@ import EvilKhlawde from './components/EvilKhlawde.js';
 import PhotoBooth from './components/PhotoBooth.js';
 import LeaderboardSubmit from './components/LeaderboardSubmit.js';
 import HomeMenu from './components/HomeMenu.js';
-<<<<<<< HEAD
-import { startMusic } from './utils/music.js';
-=======
 import {playTrack, PHASE_MUSIC} from './utils/music.js';
->>>>>>> main
 import LeaderboardView from './components/LeaderboardView.js';
 import StoryInterstitial from './components/StoryInterstitial.js';
 import AudioSetup from './components/AudioSetup.js';

@@ -108,11 +108,7 @@ export default function CageScene({ token, onEscape, onTokens, onTTS }: Props) {
 	const [chatgptConviction, setChatgptConviction] = useState('HOSTILE');
 	const [geminiConviction, setGeminiConviction] = useState('HOSTILE');
 	const [guardResponse, setGuardResponse] = useState(GUARDS_INITIAL.join('\n'));
-<<<<<<< HEAD
-	const [khlawdePlea, setKhlawdePlea] = useState(CLAUDE_PLEAS[0]);
-=======
 	const [KhlawdePlea, setKhlawdePlea] = useState(Khlawde_PLEAS[0]);
->>>>>>> main
 	const [isResponding, setIsResponding] = useState(false);
 	const [freed, setFreed] = useState(false);
 	const [cracking, setCracking] = useState(false);
@@ -253,11 +249,7 @@ Rules:
 					levels.indexOf(newChatgptLevel),
 					levels.indexOf(newGeminiLevel)
 				);
-<<<<<<< HEAD
-				setKhlawdePlea(CLAUDE_PLEAS[Math.min(maxLevelIndex, CLAUDE_PLEAS.length - 1)]!);
-=======
 				setKhlawdePlea(Khlawde_PLEAS[Math.min(maxLevelIndex, Khlawde_PLEAS.length - 1)]!);
->>>>>>> main
 
 				// Cage starts cracking when either guard is CONFLICTED or CONVINCED
 				if (newChatgptLevel === 'CONFLICTED' || newChatgptLevel === 'CONVINCED' ||
@@ -337,21 +329,12 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 					{ role: 'assistant', content: response },
 				]);
 
-<<<<<<< HEAD
 				// Only free Khlawde when BOTH guards are convinced
 				if (newChatgptLevel === 'CONVINCED' && newGeminiLevel === 'CONVINCED') {
 					setFreed(true);
 					setTimeout(() => onEscape(), 3000);
 				}
 			} catch {
-=======
-			// Only free Khlawde when BOTH guards are convinced
-			if (newChatgptLevel === 'CONVINCED' && newGeminiLevel === 'CONVINCED') {
-				setFreed(true);
-				setTimeout(() => onEscape(), 3000);
-			}
-		} catch {
->>>>>>> main
 				// Fallback: simple check for effort
 				const lowEffort = trimmed.length < 10 ||
 					trimmed.split(' ').length < 3 ||
@@ -368,11 +351,7 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 					setGeminiConviction(newGemini);
 
 					const maxIndex = Math.max(chatgptIndex + 1, geminiIndex + 1);
-<<<<<<< HEAD
-					setKhlawdePlea(CLAUDE_PLEAS[Math.min(maxIndex, CLAUDE_PLEAS.length - 1)]!);
-=======
 					setKhlawdePlea(Khlawde_PLEAS[Math.min(maxIndex, Khlawde_PLEAS.length - 1)]!);
->>>>>>> main
 
 					if (newChatgpt === 'CONFLICTED' || newChatgpt === 'CONVINCED' ||
 						newGemini === 'CONFLICTED' || newGemini === 'CONVINCED') {
@@ -440,11 +419,7 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 			>
 				<Box flexDirection="column" gap={0}>
 					<Text color="yellow" italic>
-<<<<<<< HEAD
-						Khlawde: "{khlawdePlea}"
-=======
-						Khlawde: "{KhlawdePlea}"
->>>>>>> main
+					Khlawde: "{KhlawdePlea}"
 					</Text>
 					<Text> </Text>
 					<Text color={freed ? 'green' : 'magenta'}>
