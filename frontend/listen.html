@@ -129,7 +129,7 @@ body {
 
 <!-- Hidden audio elements — routed through Web Audio API -->
 <audio id="music" loop crossorigin="anonymous"></audio>
-<audio id="tts" crossorigin="anonymous"></audio>
+<audio id="tts"></audio>
 
 <script>
 const params   = new URLSearchParams(location.search);
@@ -181,10 +181,10 @@ function initAudio() {
   musicSrc.connect(musicGain);
   musicGain.connect(audioCtx.destination);
 
-  // TTS: element -> gain (always 1) -> output
+  // TTS: element -> gain -> output
   const ttsSrc  = audioCtx.createMediaElementSource(ttsEl);
   const ttsGain = audioCtx.createGain();
-  ttsGain.gain.value = 1;
+  ttsGain.gain.value = 3;
   ttsSrc.connect(ttsGain);
   ttsGain.connect(audioCtx.destination);
 
@@ -263,7 +263,7 @@ function connect() {
       } else if (msg.type === 'tts') {
         const text = decodeURIComponent(msg.url.split('text=')[1] || '').slice(0, 60);
         log('TTS: ' + text);
-        ttsEl.src = msg.url;
+        ttsEl.src = '/tts-proxy?url=' + encodeURIComponent(msg.url);
         ttsEl.play().catch(err => log('tts play error: ' + err.message));
       }
     } catch (err) {

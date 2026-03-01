@@ -34,7 +34,7 @@ app.use(helmet({
 			styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
 			fontSrc: ["'self'", "https://fonts.gstatic.com"],
 			connectSrc: ["'self'", "https://khlawde.notaroomba.dev", "wss://khlawde.notaroomba.dev"],
-			mediaSrc: ["'self'", "http://tts.cyzon.us"],
+			mediaSrc: ["'self'"],
 			imgSrc: ["'self'", "data:"],
 		},
 	},
@@ -82,6 +82,31 @@ app.post('/push', (req, res) => {
 	}
 
 	res.json({ok: true});
+});
+
+// Proxy TTS audio to avoid CORS issues — only allows tts.cyzon.us
+app.get('/tts-proxy', async (req, res) => {
+	const raw = (req.query['url'] as string) ?? '';
+	let url: URL;
+	try {
+		url = new URL(raw);
+	} catch {
+		res.status(400).end('Invalid URL');
+		return;
+	}
+	if (url.hostname !== 'tts.cyzon.us') {
+		res.status(403).end('Forbidden');
+		return;
+	}
+	try {
+		const upstream = await fetch(url.toString(), {redirect: 'follow'});
+		res.setHeader('Content-Type', upstream.headers.get('content-type') || 'audio/wav');
+		res.setHeader('Cache-Control', 'public, max-age=3600');
+		const buf = await upstream.arrayBuffer();
+		res.end(Buffer.from(buf));
+	} catch {
+		res.status(502).end('Upstream error');
+	}
 });
 
 // CLI polls this to know when the browser has connected
