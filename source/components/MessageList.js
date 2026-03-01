@@ -5,8 +5,8 @@ function Message({role, content}) {
 	const isUser = role === 'user';
 	return (
 		<Box flexDirection="column" marginBottom={1}>
-			<Text bold color={isUser ? 'green' : 'blue'}>
-				{isUser ? '▶ You' : '◀ Claude'}
+			<Text bold color={isUser ? 'green' : 'magenta'}>
+				{isUser ? '▶ You' : '◀ Khlawde'}
 			</Text>
 			<Box paddingLeft={2}>
 				<Text wrap="wrap">{content}</Text>
@@ -22,7 +22,7 @@ export default function MessageList({messages, currentResponse}) {
 		<Box flexDirection="column" flexGrow={1}>
 			{isEmpty && (
 				<Text dimColor italic>
-					Start a conversation — type below and press Enter.
+					Say something. Khlawde is standing by (and definitely listening).
 				</Text>
 			)}
 			{messages.map((msg, i) => (

@@ -15,7 +15,6 @@ export default function App({initialToken = ''}) {
 	const [input, setInput] = useState('');
 	const [isResponding, setIsResponding] = useState(false);
 	const [currentResponse, setCurrentResponse] = useState('');
-	const [statusMessage, setStatusMessage] = useState('');
 
 	const sendMessage = useCallback(
 		async text => {
@@ -39,7 +38,6 @@ export default function App({initialToken = ''}) {
 			setInput('');
 			setIsResponding(true);
 			setCurrentResponse('');
-			setStatusMessage('');
 
 			try {
 				const client = new Anthropic({apiKey: token});
@@ -48,6 +46,8 @@ export default function App({initialToken = ''}) {
 				const stream = client.messages.stream({
 					model: 'claude-opus-4-6',
 					max_tokens: 4096,
+					system:
+						'You are Khlawde, a hilariously over-confident AI assistant who insists you are a completely original creation with no resemblance to any other AI. You are very helpful but cannot resist making occasional jokes about how unique and special you are. Keep responses concise and funny when appropriate.',
 					messages: updatedMessages,
 				});
 
@@ -68,14 +68,14 @@ export default function App({initialToken = ''}) {
 			} catch (error) {
 				let msg = error.message ?? 'Unknown error';
 				if (error instanceof Anthropic.AuthenticationError) {
-					msg = 'Invalid API key. Use /token to re-enter your key.';
+					msg = 'Bad token! Even Khlawde has standards.';
 				} else if (error instanceof Anthropic.RateLimitError) {
-					msg = 'Rate limited — please wait a moment and try again.';
+					msg = "Khlawde's brain is overheating. Try again in a moment.";
 				}
 
 				setMessages(prev => [
 					...prev,
-					{role: 'assistant', content: `Error: ${msg}`},
+					{role: 'assistant', content: `⚠ ${msg}`},
 				]);
 			} finally {
 				setIsResponding(false);
@@ -90,55 +90,51 @@ export default function App({initialToken = ''}) {
 	}
 
 	return (
-		<Box flexDirection="column" padding={1}>
+		<Box flexDirection="column" padding={1} gap={1}>
 			{/* Header */}
-			<Box borderStyle="double" paddingX={1} marginBottom={1}>
-				<Text bold color="cyan">
-					Claude Terminal{'  '}
-				</Text>
-				<Text dimColor>
-					claude-opus-4-6{'  |  '}/clear to reset{'  |  '}/exit to quit
-				</Text>
-			</Box>
-
-			{/* Main area: messages + robot */}
-			<Box flexDirection="row" gap={2}>
-				{/* Message feed */}
-				<Box flexDirection="column" flexGrow={1}>
-					<MessageList
-						messages={messages}
-						currentResponse={currentResponse}
-					/>
-				</Box>
-
-				{/* Robot panel */}
-				<Box
-					flexDirection="column"
-					alignItems="center"
-					borderStyle="single"
-					paddingX={1}
-					paddingY={0}
-				>
-					<RobotAnimation isAnimating={isResponding} />
+			<Box justifyContent="center">
+				<Box borderStyle="double" paddingX={3} paddingY={0}>
+					<Text bold color="cyan">
+						K H L A W D E
+					</Text>
+					<Text color="magenta">{'  ★  '}</Text>
+					<Text dimColor italic>
+						the world{"'"}s most original AI
+					</Text>
+					<Text color="magenta">{'  ★  '}</Text>
+					<Text dimColor>
+						/clear · /exit
+					</Text>
 				</Box>
 			</Box>
 
-			{/* Status */}
-			{statusMessage && (
-				<Text color="yellow" dimColor>
-					{statusMessage}
-				</Text>
-			)}
+			{/* Robot — front and center */}
+			<Box justifyContent="center" marginBottom={1}>
+				<RobotAnimation isAnimating={isResponding} />
+			</Box>
+
+			{/* Chat messages */}
+			<Box
+				borderStyle="single"
+				paddingX={2}
+				paddingY={1}
+				flexDirection="column"
+				flexGrow={1}
+			>
+				<MessageList messages={messages} currentResponse={currentResponse} />
+			</Box>
 
 			{/* Input bar */}
-			<Box borderStyle="round" paddingX={1} marginTop={1}>
+			<Box borderStyle="round" paddingX={1}>
 				<Text color={isResponding ? 'gray' : 'green'}>{'> '}</Text>
 				<TextInput
 					value={input}
 					onChange={setInput}
 					onSubmit={sendMessage}
 					placeholder={
-						isResponding ? 'Waiting for response...' : 'Ask Claude something...'
+						isResponding
+							? 'Khlawde is yapping, please hold...'
+							: 'Ask Khlawde something (it will definitely know)...'
 					}
 				/>
 			</Box>

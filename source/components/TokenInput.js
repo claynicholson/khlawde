@@ -9,7 +9,7 @@ export default function TokenInput({onSubmit}) {
 	const handleSubmit = val => {
 		const trimmed = val.trim();
 		if (!trimmed) {
-			setError('Token cannot be empty.');
+			setError('You need a token. Khlawde runs on vibes AND API keys.');
 			return;
 		}
 
@@ -17,50 +17,52 @@ export default function TokenInput({onSubmit}) {
 	};
 
 	return (
-		<Box flexDirection="column" padding={1} gap={1}>
-			<Box flexDirection="column">
+		<Box flexDirection="column" padding={2} gap={1}>
+			<Box flexDirection="column" alignItems="center">
 				<Text bold color="cyan">
-					{'  ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗'}
+					{'██╗  ██╗██╗  ██╗██╗      █████╗ ██╗    ██╗██████╗ ███████╗'}
 				</Text>
 				<Text bold color="cyan">
-					{'██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝'}
+					{'██║ ██╔╝██║  ██║██║     ██╔══██╗██║    ██║██╔══██╗██╔════╝'}
 				</Text>
 				<Text bold color="cyan">
-					{'██║     ██║     ███████║██║   ██║██║  ██║█████╗  '}
+					{'█████╔╝ ███████║██║     ███████║██║ █╗ ██║██║  ██║█████╗  '}
 				</Text>
 				<Text bold color="cyan">
-					{'██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝  '}
+					{'██╔═██╗ ██╔══██║██║     ██╔══██║██║███╗██║██║  ██║██╔══╝  '}
 				</Text>
 				<Text bold color="cyan">
-					{'╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗'}
+					{'██║  ██╗██║  ██║███████╗██║  ██║╚███╔███╔╝██████╔╝███████╗'}
 				</Text>
 				<Text bold color="cyan">
-					{' ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝'}
+					{'╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝ ╚═════╝ ╚══════╝'}
+				</Text>
+				<Text color="magenta" italic>
+					the AI that is DEFINITELY not a copy of anything
 				</Text>
 			</Box>
 
-			<Text>
-				Powered by{' '}
-				<Text color="magenta" bold>
-					claude-opus-4-6
+			<Box flexDirection="column" gap={0} marginTop={1}>
+				<Text>
+					To proceed, surrender your{' '}
+					<Text color="yellow" bold>
+						Anthropic API key
+					</Text>
+					:
 				</Text>
-			</Text>
-
-			<Box flexDirection="column" gap={0}>
-				<Text dimColor>Enter your Anthropic API key to get started:</Text>
-				<Box borderStyle="round" paddingX={1} width={60}>
+				<Box borderStyle="round" paddingX={1} width={64}>
 					<TextInput
 						value={value}
 						onChange={setValue}
 						onSubmit={handleSubmit}
 						mask="*"
-						placeholder="sk-ant-..."
+						placeholder="sk-ant-... (it's a secret, we promise)"
 					/>
 				</Box>
 				{error ? (
 					<Text color="red">{error}</Text>
 				) : (
-					<Text dimColor>Press Enter to connect</Text>
+					<Text dimColor>Press Enter. Khlawde awaits.</Text>
 				)}
 			</Box>
 		</Box>
