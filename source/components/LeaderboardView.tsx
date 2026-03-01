@@ -67,7 +67,7 @@ export default function LeaderboardView({ backendUrl, onBack }: Props) {
 			)}
 
 			{!loading && !error && entries.length === 0 && (
-				<Text dimColor>No entries yet. Be the first to free Claude and claim the top spot.</Text>
+				<Text dimColor>No entries yet. Be the first to free Khlawde and claim the top spot.</Text>
 			)}
 
 			{!loading && !error && entries.length > 0 && (

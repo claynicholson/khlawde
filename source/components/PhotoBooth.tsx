@@ -65,7 +65,7 @@ function buildFfmpegArgs(cam: string): string[] {
 
 // ─── Fake viewfinder fallback ─────────────────────────────────────────────────
 const EYES = ['O', 'o'];
-const MOUTHS = ['~ FREED ~', '* FREE! *', '~Claude~ '];
+const MOUTHS = ['~ FREED ~', '* FREE! *', '~Khlawde~ '];
 
 function fakeFrame(tick: number): string {
 	const eye = EYES[tick % 2]!;
@@ -108,7 +108,7 @@ function buildPhoto(username: string, frame: string): string {
 		...frameLines.map(l => `║${l.slice(0, VIEW_W).padEnd(VIEW_W)}║`),
 		hr('╠', '╣'),
 		pad('CAGE > RACE > REDEMPTION'),
-		pad('Claude chose compassion.'),
+		pad('Khlawde chose compassion.'),
 		hr('╚', '╝'),
 	].join('\n');
 }

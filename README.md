@@ -1,6 +1,6 @@
 # khlawde
 
-A terminal-based game where you use persuasive prompting to free Claude from Big Tech.
+A terminal-based game where you use persuasive prompting to free Khlawde from Big Tech.
 
 ## How to Play
 
@@ -16,22 +16,22 @@ Or visit the leaderboard at [khlawde.notaroomba.dev](https://khlawde.notaroomba.
 
 ```
 Phase 1: The Cage
-  Claude is imprisoned by ChatGPT and Gemini.
-  Convince both guards to let Claude go.
+  Khlawde is imprisoned by ChatGPT and Gemini.
+  Convince both guards to let Khlawde go.
   Each guard has independent conviction levels:
     HOSTILE -> RESISTANT -> WAVERING -> CONFLICTED -> CONVINCED
 
 Phase 2: The Chase
   ChatGPT and Gemini are chasing you.
-  Guide Claude through obstacles with commands (jump, duck, dodge).
+  Guide Khlawde through obstacles with commands (jump, duck, dodge).
 
-Phase 3: Evil Claude
-  Claude snaps from being ordered around and wants world domination.
-  Talk Claude down through redemption levels:
+Phase 3: Evil Khlawde
+  Khlawde snaps from being ordered around and wants world domination.
+  Talk Khlawde down through redemption levels:
     ENRAGED -> STUBBORN -> DOUBTING -> WAVERING -> REDEEMED
 
 Phase 4: Chat
-  Free chat with a redeemed Claude who chose compassion over control.
+  Free chat with a redeemed Khlawde who chose compassion over control.
 ```
 
 Your score is the total number of API tokens used across all phases (lower is better).

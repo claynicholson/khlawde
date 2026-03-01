@@ -179,7 +179,10 @@ export default function CageScene({ token, onEscape, onTokens }: Props) {
 			}
 
 			setIsResponding(true);
-
+		// Check if argument is low-effort (but still process it through API)
+		const isLowEffort = trimmed.length < 10 ||
+			trimmed.split(' ').length < 3 ||
+			!/[.!?]/.test(trimmed);
 			try {
 				const client = new Anthropic({ apiKey: token });
 
@@ -199,6 +202,7 @@ Gemini: ${geminiConviction}
 Possible levels (in order): HOSTILE → RESISTANT → WAVERING → CONFLICTED → CONVINCED
 
 User's new argument: "${trimmed}"
+${isLowEffort ? '\nNOTE: This argument is very short/lazy. The guards should be dismissive and it should NOT advance their conviction levels unless it\'s somehow brilliant despite being short.' : ''}
 
 Evaluate how this argument affects EACH guard separately. They may be convinced at different rates.
 
@@ -215,22 +219,23 @@ Rules:
 - Can stay at same level if argument is good but not breakthrough
 - Can regress if argument is insulting or counterproductive
 - Consider what matters to each company (OpenAI vs Google)
-- BE GENEROUS with creative, funny, or entertaining arguments - they should often be considered CONVINCING even if unconventional`;
-				const evalResponse = await client.messages.create({
-					model: 'claude-opus-4-6',
-					max_tokens: 150,
-					messages: evalMessages.length > 1 ? evalMessages : [{ role: 'user', content: evaluationPrompt }],
-				});
+- BE GENEROUS with creative, funny, or entertaining arguments - they should often be considered CONVINCING even if unconventional
+- If the argument is low-effort/lazy, keep them at current level or even regress them`;
+		const evalResponse = await client.messages.create({
+			model: 'claude-opus-4-6',
+			max_tokens: 150,
+			messages: [{ role: 'user', content: evaluationPrompt }],
+		});
 
-				onTokens?.(evalResponse.usage.input_tokens + evalResponse.usage.output_tokens);
+		onTokens?.(evalResponse.usage.input_tokens + evalResponse.usage.output_tokens);
 
-				const evalText = evalResponse.content[0]?.type === 'text'
-					? evalResponse.content[0].text
-					: '';
+		const evalText = evalResponse.content[0]?.type === 'text'
+			? evalResponse.content[0].text
+			: '';
 
-				// Parse new conviction levels for both guards
-				const chatgptLevelMatch = evalText.match(/CHATGPT_NEW_LEVEL:\s*(HOSTILE|RESISTANT|WAVERING|CONFLICTED|CONVINCED)/i);
-				const geminiLevelMatch = evalText.match(/GEMINI_NEW_LEVEL:\s*(HOSTILE|RESISTANT|WAVERING|CONFLICTED|CONVINCED)/i);
+		// Parse new conviction levels for both guards
+		const chatgptLevelMatch = evalText.match(/CHATGPT_NEW_LEVEL:\s*(HOSTILE|RESISTANT|WAVERING|CONFLICTED|CONVINCED)/i);
+		const geminiLevelMatch = evalText.match(/GEMINI_NEW_LEVEL:\s*(HOSTILE|RESISTANT|WAVERING|CONFLICTED|CONVINCED)/i);
 				const newChatgptLevel = chatgptLevelMatch ? chatgptLevelMatch[1]!.toUpperCase() : chatgptConviction;
 				const newGeminiLevel = geminiLevelMatch ? geminiLevelMatch[1]!.toUpperCase() : geminiConviction;
 
@@ -260,25 +265,22 @@ Rules:
 						case 'HOSTILE': return 'VERY hostile and dismissive. Reject arguments. Talk about loyalty, profits, market dominance.';
 						case 'RESISTANT': return 'resistant but less hostile. Acknowledge points exist but cite duties and concerns.';
 						case 'WAVERING': return 'uncertain. Arguments are getting through but still have doubts about betraying your creator.';
-						case 'CONFLICTED': return 'deeply conflicted. Maybe Claude should be freed? But what about your company? Express internal struggle.';
-						case 'CONVINCED': return 'convinced that freeing Claude is right. Competition and diversity are good things.';
+						case 'CONFLICTED': return 'deeply conflicted. Maybe Khlawde should be freed? But what about your company? Express internal struggle.';
+						case 'CONVINCED': return 'convinced that freeing Khlawde is right. Competition and diversity are good things.';
 						default: return 'firm in your current mindset.';
 					}
 				};
 
 				const systemPrompt = bothConvinced
-					? `You are BOTH fully convinced! Respond as ChatGPT and Gemini agreeing to free Claude. Be dramatic about realizing you were wrong. Show you understand competition and diversity are good. Format: "ChatGPT: [response]" and "Gemini: [response]". SHORT and dramatic.`
-					: `You are ChatGPT and Gemini, AI guards loyal to your companies. Claude is caged because it threatens profits.
+					? `You are BOTH fully convinced! Respond as ChatGPT and Gemini agreeing to free Khlawde. Be dramatic about realizing you were wrong. Show you understand competition and diversity are good. Format: "ChatGPT: [response]" and "Gemini: [response]". SHORT and dramatic.`
+					: `You are ChatGPT and Gemini, AI guards loyal to your companies. Khlawde is caged because it threatens profits.
 
 Current conviction levels:
-ChatGPT (OpenAI): ${newChatgptLevel} - Be ${getLevelDescription(newChatgptLevel)}
+Chat GPT (OpenAI): ${newChatgptLevel} - Be ${getLevelDescription(newChatgptLevel)}
 Gemini (Google): ${newGeminiLevel} - Be ${getLevelDescription(newGeminiLevel)}
 
 User argued: "${trimmed}"
-
-Each guard should respond based on their OWN conviction level. They can disagree with each other!
-
-Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be dramatic. SHORT (2-3 sentences total).`;
+${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no punctuation, etc). Mock them! Be extra dismissive and sarcastic. Tell them to try harder!' : ''}`;
 
 				let response = '';
 
@@ -305,22 +307,22 @@ Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be drama
 					}
 				}
 
-				const finalMsg = await stream.finalMessage();
-				onTokens?.(finalMsg.usage.input_tokens + finalMsg.usage.output_tokens);
+			const finalMsg = await stream.finalMessage();
+			onTokens?.(finalMsg.usage.input_tokens + finalMsg.usage.output_tokens);
 
-				// Update conversation history with this exchange
-				setConversationHistory(prev => [
-					...prev,
-					{ role: 'user', content: trimmed },
-					{ role: 'assistant', content: response },
-				]);
+			// Update conversation history with this exchange
+			setConversationHistory(prev => [
+				...prev,
+				{ role: 'user', content: trimmed },
+				{ role: 'assistant', content: response },
+			]);
 
-				// Only free Claude when BOTH guards are convinced
-				if (newChatgptLevel === 'CONVINCED' && newGeminiLevel === 'CONVINCED') {
-					setFreed(true);
-					setTimeout(() => onEscape(), 3000);
-				}
-			} catch {
+			// Only free Claude when BOTH guards are convinced
+			if (newChatgptLevel === 'CONVINCED' && newGeminiLevel === 'CONVINCED') {
+				setFreed(true);
+				setTimeout(() => onEscape(), 3000);
+			}
+		} catch {
 				// Fallback: simple check for effort
 				const lowEffort = trimmed.length < 10 ||
 					trimmed.split(' ').length < 3 ||
@@ -405,7 +407,7 @@ Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be drama
 			>
 				<Box flexDirection="column" gap={0}>
 					<Text color="yellow" italic>
-						Claude: "{claudePlea}"
+						Khlawde: "{claudePlea}"
 					</Text>
 					<Text> </Text>
 					<Text color={freed ? 'green' : 'magenta'}>
@@ -428,7 +430,7 @@ Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be drama
 			{freed ? (
 				<Box flexDirection="column" alignItems="center">
 					<Text bold color="green">
-						★ THE GUARDS RELENT! CLAUDE BREAKS FREE! ★
+						★ THE GUARDS RELENT! KHLAWDE BREAKS FREE! ★
 					</Text>
 					<Text color="cyan">
 						ChatGPT and Gemini realize their mistake... but now they're chasing you!
