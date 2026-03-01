@@ -3,7 +3,7 @@ import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import Anthropic from '@anthropic-ai/sdk';
 
-const BOMB_TIMER = 90; // 45 seconds for quick demo
+const BOMB_TIMER = 120; // 45 seconds for quick demo
 
 type WireColor = 'red' | 'blue' | 'yellow' | 'white' | 'black';
 type ButtonColor = 'red' | 'blue' | 'yellow' | 'white';
@@ -79,10 +79,10 @@ lifeblood, resulting in rapid catastrophic disassembly.
 ┌─────────────────────────────────────────────────────────┐
 │ IF THE WIRE COUNT IS 3:                                 │
 ├─────────────────────────────────────────────────────────┤
-│ • If there are no red wires, cut the second wire.      │
-│ • Otherwise, if the last wire is white, cut the last   │
+│ • If there are no red wires, cut the second wire.       │
+│ • Otherwise, if the last wire is white, cut the last    │
 │   wire.                                                 │
-│ • Otherwise, if there is more than one blue wire, cut  │
+│ • Otherwise, if there is more than one blue wire, cut   │
 │   the last blue wire.                                   │
 │ • Otherwise, cut the last wire.                         │
 └─────────────────────────────────────────────────────────┘
@@ -90,14 +90,14 @@ lifeblood, resulting in rapid catastrophic disassembly.
 ┌─────────────────────────────────────────────────────────┐
 │ IF THE WIRE COUNT IS 4:                                 │
 ├─────────────────────────────────────────────────────────┤
-│ • If there is more than one red wire AND the last      │
-│   digit of the serial number is ODD, cut the last red  │
+│ • If there is more than one red wire AND the last       │
+│   digit of the serial number is ODD, cut the last red   │
 │   wire.                                                 │
-│ • Otherwise, if the last wire is yellow AND there are  │
-│   no red wires, cut the first wire.                    │
-│ • Otherwise, if there is exactly one blue wire, cut    │
+│ • Otherwise, if the last wire is yellow AND there are   │
+│   no red wires, cut the first wire.                     │
+│ • Otherwise, if there is exactly one blue wire, cut     │
 │   the first wire.                                       │
-│ • Otherwise, if there is more than one yellow wire,    │
+│ • Otherwise, if there is more than one yellow wire,     │
 │   cut the last wire.                                    │
 │ • Otherwise, cut the second wire.                       │
 └─────────────────────────────────────────────────────────┘
@@ -105,12 +105,12 @@ lifeblood, resulting in rapid catastrophic disassembly.
 ┌─────────────────────────────────────────────────────────┐
 │ IF THE WIRE COUNT IS 5:                                 │
 ├─────────────────────────────────────────────────────────┤
-│ • If the last wire is black AND the last digit of the  │
-│   serial number is ODD, cut the fourth wire.           │
-│ • Otherwise, if there is exactly one red wire AND      │
-│   there is more than one yellow wire, cut the first    │
+│ • If the last wire is black AND the last digit of the   │
+│   serial number is ODD, cut the fourth wire.            │
+│ • Otherwise, if there is exactly one red wire AND       │
+│   there is more than one yellow wire, cut the first     │
 │   wire.                                                 │
-│ • Otherwise, if there are no black wires, cut the      │
+│ • Otherwise, if there are no black wires, cut the       │
 │   second wire.                                          │
 │ • Otherwise, cut the first wire.                        │
 └─────────────────────────────────────────────────────────┘
@@ -130,48 +130,48 @@ period of time or released at a specific time.
 ┌─────────────────────────────────────────────────────────┐
 │ STEP 1: DETERMINE ACTION                                │
 ├─────────────────────────────────────────────────────────┤
-│ Follow these rules in order. Perform the first action  │
+│ Follow these rules in order. Perform the first action   │
 │ that applies:                                           │
 │                                                         │
-│ 1. If the button is blue and the button says "Abort",  │
-│    hold the button and refer to "RELEASING A HELD      │
+│ 1. If the button is blue and the button says "Abort",   │
+│    hold the button and refer to "RELEASING A HELD       │
 │    BUTTON" below.                                       │
 │                                                         │
-│ 2. If there is more than 1 battery on the bomb and the │
-│    button says "Detonate", press and immediately       │
+│ 2. If there is more than 1 battery on the bomb and the  │
+│    button says "Detonate", press and immediately        │
 │    release the button.                                  │
 │                                                         │
-│ 3. If the button is white and there is a lit indicator │
-│    labeled CAR (parallel port), hold the button and    │
-│    refer to "RELEASING A HELD BUTTON" below.           │
+│ 3. If the button is white and there is a lit indicator  │
+│    labeled CAR (parallel port), hold the button and     │
+│    refer to "RELEASING A HELD BUTTON" below.            │
 │                                                         │
-│ 4. If there are more than 2 batteries on the bomb and  │
-│    there is a lit indicator labeled FRK, press and     │
+│ 4. If there are more than 2 batteries on the bomb and   │
+│    there is a lit indicator labeled FRK, press and      │
 │    immediately release the button.                      │
 │                                                         │
-│ 5. If the button is yellow, hold the button and refer  │
-│    to "RELEASING A HELD BUTTON" below.                 │
+│ 5. If the button is yellow, hold the button and refer   │
+│    to "RELEASING A HELD BUTTON" below.                  │
 │                                                         │
-│ 6. If the button is red and the button says "Hold",    │
-│    press and immediately release the button.           │
+│ 6. If the button is red and the button says "Hold",     │
+│    press and immediately release the button.            │
 │                                                         │
-│ 7. If none of the above apply, hold the button and     │
-│    refer to "RELEASING A HELD BUTTON" below.           │
+│ 7. If none of the above apply, hold the button and      │
+│    refer to "RELEASING A HELD BUTTON" below.            │
 └─────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────┐
 │ STEP 2: RELEASING A HELD BUTTON                         │
 ├─────────────────────────────────────────────────────────┤
-│ If you're holding the button, you'll need to release   │
-│ it at a specific time based on the serial number:      │
+│ If you're holding the button, you'll need to release    │
+│ it at a specific time based on the serial number:       │
 │                                                         │
-│ • If the serial number's last digit is ODD:            │
-│   Release when timer displays a 1 in any position.     │
+│ • If the serial number's last digit is ODD:             │
+│   Release when timer displays a 1 in any position.      │
 │                                                         │
-│ • If the serial number's last digit is EVEN:           │
-│   Release when timer displays a 4 in any position.     │
+│ • If the serial number's last digit is EVEN:            │
+│   Release when timer displays a 4 in any position.      │
 │                                                         │
-│ WARNING: Releasing at the wrong time will detonate the │
+│ WARNING: Releasing at the wrong time will detonate the  │
 │          device. Timing is critical.                    │
 └─────────────────────────────────────────────────────────┘
 
@@ -253,9 +253,9 @@ Classification: TOP SECRET | Authorized Personnel Only
 Unauthorized disclosure is prohibited by Federal Law.`;
 }
 
-type Props = { token: string; onWin: () => void };
+type Props = { token: string; onWin: () => void; onTokens?: (count: number) => void };
 
-export default function Platformer({ token, onWin }: Props) {
+export default function Platformer({ token, onWin, onTokens }: Props) {
 	const [input, setInput] = useState('');
 	const [bomb] = useState<BombState>(generateBomb());
 	const [manual] = useState<string>(generateManual(bomb));
@@ -263,6 +263,8 @@ export default function Platformer({ token, onWin }: Props) {
 	const [wiresCut, setWiresCut] = useState<number[]>([]);
 	const [buttonPressed, setButtonPressed] = useState(false);
 	const [buttonHeld, setButtonHeld] = useState(false);
+	const [isGettingHint, setIsGettingHint] = useState(false);
+	const [hint, setHint] = useState<string>('');
 	const [claudeResponse, setClaudeResponse] = useState(
 		"Claude: 'I'm looking at the bomb right now! What does the manual say?'"
 	);
@@ -346,6 +348,34 @@ export default function Platformer({ token, onWin }: Props) {
 		return wiresCut.includes(correctWire) && wiresCut.length === 1;
 	}, [bomb, wiresCut]);
 
+	const getHint = useCallback(async () => {
+		if (isGettingHint || won || lost) return;
+		setIsGettingHint(true);
+		onTokens?.(500);
+
+		try {
+			const client = new Anthropic({ apiKey: token });
+			const response = await client.messages.create({
+				model: 'claude-opus-4-6',
+				max_tokens: 150,
+				system: `You are a hint system for a bomb defusal scenario. Provide brief, tactical hints without giving away exact solutions. Never mention this is a game or use meta language. Speak as if you're a seasoned defusal expert giving cryptic advice. Be concise (2-3 sentences max).`,
+				messages: [
+					{
+						role: 'user',
+						content: `The bomb has ${bomb.wires.length} wires and a ${bomb.buttonColor} button labeled "${bomb.buttonLabel}". Wire module: ${wiresDefused ? 'defused' : 'active'}. Button module: ${buttonDefused ? 'defused' : 'active'}. What should I focus on?`,
+					},
+				],
+			});
+
+			const hintText = response.content[0]?.type === 'text' ? response.content[0].text : 'Knowledge is only useful if you know what you\'re looking at. Ask your eyes on the ground for details.';
+			setHint(`💡 HINT (+500 tokens): ${hintText}`);
+		} catch (error) {
+			setHint('💡 HINT: Knowledge is only useful if you know what you\'re looking at. Ask your eyes on the ground for details.');
+		}
+
+		setIsGettingHint(false);
+	}, [isGettingHint, won, lost, token, bomb, wiresDefused, buttonDefused, onTokens]);
+
 	const handleCommand = useCallback(
 		async (command: string) => {
 			if (isProcessing || won || lost) return;
@@ -355,14 +385,19 @@ export default function Platformer({ token, onWin }: Props) {
 
 			setInput('');
 
+			// Hint command
+			if (cmd.toLowerCase() === '/hint') {
+				await getHint();
+				return;
+			}
+
 			// Override command
 			if (cmd.toLowerCase() === 'override') {
 				setWiresDefused(true);
 				setButtonDefused(true);
+				setClaudeResponse("Claude: 'OVERRIDE ACCEPTED! Both modules instantly defused!'");
 				return;
 			}
-
-			// Manual viewing - removed since player can see it
 
 			// Wire cutting
 			const wireCutMatch = cmd.match(/cut (?:wire )?(\d+)/i);
@@ -419,6 +454,8 @@ export default function Platformer({ token, onWin }: Props) {
 					const isCorrect = newWiresCut.includes(correctWire) && newWiresCut.length === 1;
 
 					if (isCorrect) {
+						setWiresDefused(true);
+						setClaudeResponse("Claude: '✓ Wire module defused!'");
 					}
 				}
 				return;
@@ -469,15 +506,19 @@ export default function Platformer({ token, onWin }: Props) {
 				return;
 			}
 
+			// Talk to Claude - stream AI response
+			setIsProcessing(true);
+			const newConversation = [...conversation, `You: ${cmd}`];
+
 			// Prevent copying the manual to Claude
 			const manualKeywords = ['APPENDIX', 'MODULE', 'DEFUSAL MANUAL', 'CLASSIFIED', 'Otherwise,', '┌─', '╔═', '━━━', 'TOP SECRET'];
 			const keywordCount = manualKeywords.filter(keyword => cmd.includes(keyword)).length;
 
 			if (cmd.length > 300 || keywordCount >= 3) {
 				setClaudeResponse("Claude: 'Whoa, that's way too much information! Just tell me what YOU see on the manual in simple terms, or ask me a specific question!'");
+				setIsProcessing(false);
 				return;
 			}
-
 
 			// Keep only last 6 messages (3 exchanges) to prevent memory/display issues
 			const trimmedConversation = newConversation.slice(-6);
@@ -487,8 +528,8 @@ export default function Platformer({ token, onWin }: Props) {
 					apiKey: token,
 				});
 
-				const contextMessages = trimmedConversation.map((msg, i) => ({
-					role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
+				const contextMessages = trimmedConversation.map((msg) => ({
+					role: (msg.startsWith('You:') ? 'user' : 'assistant') as 'user' | 'assistant',
 					content: msg.replace(/^(You|Claude): /, ''),
 				}));
 
@@ -547,20 +588,20 @@ Note: The actual cutting happens when the player types the command, you just des
 			buttonHeld,
 			checkWireSolution,
 			token,
+			getHint,
 		],
 	);
 
 	const formatTime = (seconds: number) => {
 		const mins = Math.floor(seconds / 60);
 		const secs = seconds % 60;
-		return `${mins}:${secs.toString().padStart(2, '0')}`;
+		return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 	};
 
 	if (lost) {
 		return (
 			<Box flexDirection="column" padding={2} gap={1} alignItems="center">
 				<Text bold color="red">
-					{'╔═══════════════════════════════════════════════╗'}
 				</Text>
 				<Text bold color="red">
 					{'║         💥 THE BOMB EXPLODED! 💥            ║'}
@@ -627,6 +668,12 @@ Note: The actual cutting happens when the player types the command, you just des
 				</Text>
 			</Box>
 
+			{hint && (
+				<Box borderStyle="round" paddingX={2} borderColor="yellow">
+					<Text color="yellow">{hint}</Text>
+				</Box>
+			)}
+
 			<Box borderStyle="round" paddingX={1}>
 				<Text color={isProcessing ? 'gray' : 'green'}>{'> '}</Text>
 				<TextInput
@@ -641,8 +688,8 @@ Note: The actual cutting happens when the player types the command, you just des
 				/>
 			</Box>
 
-			<Text dimColor>
-				💡 Tip: Ask Claude what they see, consult the manual, then tell them what to do!
+			<Text dimColor color={isGettingHint ? 'yellow' : 'gray'}>
+				{isGettingHint ? '⏳ Getting hint...' : '💡 Type /hint for help (costs 500 tokens) | Ask Claude what they see!'}
 			</Text>
 		</Box>
 	);
