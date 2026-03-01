@@ -199,7 +199,7 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	}
 
 	if (phase === 'photo') {
-		return <PhotoBooth onDone={() => setPhase('chat')} />;
+		return <PhotoBooth onDone={() => setPhase('chat')} backendUrl={resolvedBackendUrl} />;
 	}
 
 	if (phase === 'tokenInput' || (!token && phase !== 'viewLeaderboard')) {
