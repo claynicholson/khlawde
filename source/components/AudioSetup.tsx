@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Text, useInput } from 'ink';
+import React, {useState, useEffect} from 'react';
+import {Box, Text, useInput} from 'ink';
 
 type Props = {
 	audioCode: string;
@@ -8,10 +8,15 @@ type Props = {
 	onContinue: () => void;
 };
 
-export default function AudioSetup({ audioCode, audioPort, backendUrl, onContinue }: Props) {
+export default function AudioSetup({
+	audioCode,
+	audioPort,
+	backendUrl,
+	onContinue,
+}: Props) {
 	const [connected, setConnected] = useState(false);
 
-	const listenUrl = `${backendUrl}/listen?code=${audioCode}`;
+	const connectUrl = `${backendUrl}/connect?code=${audioCode}`;
 
 	// Poll localhost for browser connection
 	useEffect(() => {
@@ -20,8 +25,10 @@ export default function AudioSetup({ audioCode, audioPort, backendUrl, onContinu
 		const interval = setInterval(async () => {
 			if (done) return;
 			try {
-				const res = await fetch(`http://localhost:${audioPort}/check?code=${audioCode}`);
-				const data = (await res.json()) as { connected: boolean };
+				const res = await fetch(
+					`http://localhost:${audioPort}/check?code=${audioCode}`,
+				);
+				const data = (await res.json()) as {connected: boolean};
 				if (data.connected) {
 					done = true;
 					clearInterval(interval);
@@ -71,11 +78,17 @@ export default function AudioSetup({ audioCode, audioPort, backendUrl, onContinu
 
 			<Box borderStyle="round" paddingX={3} paddingY={1}>
 				<Text color="yellow" bold>
-					{listenUrl}
+					{connectUrl}
 				</Text>
 			</Box>
 
-			<Text dimColor>Open it, then click <Text color="green" bold>Enable Audio</Text> — the game will start automatically.</Text>
+			<Text dimColor>
+				Open it, then click{' '}
+				<Text color="green" bold>
+					Enable Audio
+				</Text>{' '}
+				— the game will start automatically.
+			</Text>
 
 			<Box marginTop={1} gap={1}>
 				<Text dimColor>Press</Text>
