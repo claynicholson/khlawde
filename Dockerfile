@@ -1,21 +1,9 @@
 FROM node:20-bookworm
 
+# Build tools for node-pty native compilation + ssh-keygen for host key generation
 RUN apt-get update && \
-    apt-get install -y openssh-server && \
-    rm -rf /var/lib/apt/lists/* && \
-    mkdir -p /run/sshd
-
-# Create player user with empty password and register the game shell
-RUN echo "/app/ssh-shell.sh" >> /etc/shells && \
-    useradd -m -s /app/ssh-shell.sh player && \
-    passwd -d player
-
-# SSH config: allow empty passwords, force the game shell
-RUN sed -i 's/#PermitEmptyPasswords no/PermitEmptyPasswords yes/' /etc/ssh/sshd_config && \
-    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
-    sed -i 's/#PrintMotd yes/PrintMotd no/' /etc/ssh/sshd_config && \
-    echo "PermitEmptyPasswords yes" >> /etc/ssh/sshd_config && \
-    echo "PrintMotd no" >> /etc/ssh/sshd_config
+    apt-get install -y build-essential python3 openssh-client && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -30,12 +18,12 @@ RUN cd backend && npm install
 # Copy source
 COPY . .
 
-# Build the CLI app
+# Build the CLI app (includes ssh-server.ts -> ssh-server.js)
 RUN npm run build
 
-# Make scripts executable
-RUN chmod +x /app/ssh-shell.sh /app/docker-entrypoint.sh
+# Make entrypoint executable
+RUN chmod +x /app/docker-entrypoint.sh
 
-EXPOSE 22 3000
+EXPOSE 2222 3000
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
