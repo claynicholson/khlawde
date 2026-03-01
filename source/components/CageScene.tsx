@@ -297,19 +297,30 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 					messages: guardMessages,
 				});
 
+				let ttsBuf = '';
 				for await (const event of stream) {
 					if (
 						event.type === 'content_block_delta' &&
 						event.delta.type === 'text_delta'
 					) {
 						response += event.delta.text;
+						ttsBuf  += event.delta.text;
 						setGuardResponse(response);
+						// Flush complete sentences as they arrive
+						const re = /[^.!?]*[.!?]+\s*/g;
+						let m: RegExpExecArray | null;
+						let last = 0;
+						while ((m = re.exec(ttsBuf)) !== null) {
+							onTTS?.(m[0].trim());
+							last = m.index + m[0].length;
+						}
+						ttsBuf = ttsBuf.slice(last);
 					}
 				}
+				if (ttsBuf.trim()) onTTS?.(ttsBuf.trim());
 
 				const finalMsg = await stream.finalMessage();
 				onTokens?.(finalMsg.usage.input_tokens + finalMsg.usage.output_tokens);
-				onTTS?.(response);
 
 			// Update conversation history with this exchange
 			setConversationHistory(prev => [

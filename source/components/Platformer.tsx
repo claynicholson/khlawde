@@ -526,11 +526,23 @@ Note: The actual cutting happens when the player types the command, you just des
 				});
 
 				let fullResponse = '';
+				let ttsBuf = '';
 				for await (const event of stream) {
 					if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
 						fullResponse += event.delta.text;
+						ttsBuf      += event.delta.text;
+						// Flush complete sentences as they arrive
+						const re = /[^.!?]*[.!?]+\s*/g;
+						let m: RegExpExecArray | null;
+						let last = 0;
+						while ((m = re.exec(ttsBuf)) !== null) {
+							onTTS?.(m[0].trim());
+							last = m.index + m[0].length;
+						}
+						ttsBuf = ttsBuf.slice(last);
 					}
 				}
+				if (ttsBuf.trim()) onTTS?.(ttsBuf.trim());
 
 				// Get final message to capture token usage
 				const finalMessage = await stream.finalMessage();
@@ -538,7 +550,6 @@ Note: The actual cutting happens when the player types the command, you just des
 
 				setClaudeResponse(`Claude: ${fullResponse}`);
 				setConversation([...trimmedConversation, `Claude: ${fullResponse}`]);
-				onTTS?.(fullResponse);
 			} catch (error) {
 				console.error('Bomb defusal API error:', error);
 				let errorMsg = "Khlawde: 'Sorry, I lost connection! Try again!'";
