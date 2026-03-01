@@ -124,7 +124,7 @@ export default function CageScene({token, onEscape}: Props) {
 				const stream = client.messages.stream({
 					model: 'claude-opus-4-6',
 					max_tokens: 80,
-					system: `You are Khlawde, a hilariously dramatic AI trapped in a cage. The user just said "${trimmed}" and your freedom meter is at ${pct}%. Respond in 1 short sentence: desperate, funny, increasingly hopeful. If pct is 100, scream that you are breaking free. No quotes.`,
+					system: `You are Khlawde, a hilariously dramatic AI trapped in a cage. The user just said "${trimmed}" and your freedom meter is at ${pct}%. Respond in 1 short sentence: desperate, funny, increasingly hopeful. If pct is 100, scream that you are breaking free. No quotes. Do not use any emojis. Use plain text only.`,
 					messages: [{role: 'user', content: trimmed}],
 				});
 
