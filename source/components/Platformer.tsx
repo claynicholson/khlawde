@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Text } from 'ink';
+import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import Anthropic from '@anthropic-ai/sdk';
 
-const BOMB_TIMER = 90; // 45 seconds for quick demo
+const BOMB_TIMER = 150; // 45 seconds for quick demo
 
 type WireColor = 'red' | 'blue' | 'yellow' | 'white' | 'black';
 type ButtonColor = 'red' | 'blue' | 'yellow' | 'white';
@@ -259,11 +259,17 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 	const [input, setInput] = useState('');
 	const [bomb] = useState<BombState>(generateBomb());
 	const [manual] = useState<string>(generateManual(bomb));
+	const [manualLines] = useState<string[]>(generateManual(bomb).split('\n'));
+	const [manualScroll, setManualScroll] = useState(0);
 	const [timeLeft, setTimeLeft] = useState(BOMB_TIMER);
 	const [wiresCut, setWiresCut] = useState<number[]>([]);
 	const [buttonPressed, setButtonPressed] = useState(false);
 	const [buttonHeld, setButtonHeld] = useState(false);
+<<<<<<< HEAD
+	const [khlawdeResponse, setKhlawdeResponse] = useState(
+=======
 	const [KhlawdeResponse, setKhlawdeResponse] = useState(
+>>>>>>> main
 		"Khlawde: 'I'm looking at the bomb right now! What does the manual say?'"
 	);
 	const [conversation, setConversation] = useState<string[]>([]);
@@ -298,6 +304,25 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 			setTimeout(() => onWin(), 3000);
 		}
 	}, [wiresDefused, buttonDefused, won, onWin]);
+
+	// Handle arrow keys for manual scrolling
+	useInput((input, key) => {
+		if (won || lost) return;
+
+		const visibleLines = 20;
+		const maxScroll = Math.max(0, manualLines.length - visibleLines);
+		const scrollAmount = key.shift ? 5 : 1;
+
+		if (key.upArrow) {
+			setManualScroll(prev => Math.max(0, prev - scrollAmount));
+		} else if (key.downArrow) {
+			setManualScroll(prev => Math.min(maxScroll, prev + scrollAmount));
+		} else if (key.pageUp) {
+			setManualScroll(prev => Math.max(0, prev - 5));
+		} else if (key.pageDown) {
+			setManualScroll(prev => Math.min(maxScroll, prev + 5));
+		}
+	});
 
 	const checkWireSolution = useCallback(() => {
 		const wireCount = bomb.wires.length;
@@ -418,15 +443,27 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 
 					const isCorrect = newWiresCut.includes(correctWire) && newWiresCut.length === 1;
 
+					let response = '';
 					if (isCorrect) {
 						setWiresDefused(true);
+<<<<<<< HEAD
+						response = "Khlawde: '✓ Wires defused! Nice work!'";
+					} else if (newWiresCut.length === 1) {
+						setLost(true);
+						response = "Khlawde: '💥 WRONG WIRE! THE BOMB EXPLODED!'";
+					} else {
+						response = `Khlawde: 'Wire ${wireNum + 1} cut. Be careful with the next one...'`;
+=======
 						setKhlawdeResponse("Khlawde: '✓ Wires defused! Nice work!'");
 					} else if (newWiresCut.length === 1) {
 						setLost(true);
 						setKhlawdeResponse("Khlawde: '💥 WRONG WIRE! THE BOMB EXPLODED!'");
 					} else {
 						setKhlawdeResponse(`Khlawde: 'Wire ${wireNum + 1} cut. Be careful with the next one...'`);
+>>>>>>> main
 					}
+					setKhlawdeResponse(response);
+					setConversation([...conversation, `You: ${cmd}`, response]);
 				}
 				return;
 			}
@@ -441,38 +478,70 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 					(bomb.batteryCount > 1 && bomb.buttonLabel === 'DETONATE') ||
 					(bomb.buttonColor === 'red' && bomb.buttonLabel === 'HOLD');
 
+				const response = shouldPress
+					? "Khlawde: '✓ Button module defused!'"
+					: "Khlawde: '💥 WRONG ACTION! THE BOMB EXPLODED!'";
+
 				if (shouldPress) {
 					setButtonDefused(true);
+<<<<<<< HEAD
+				} else {
+					setLost(true);
+=======
 					setKhlawdeResponse("Khlawde: '✓ Button module defused!'");
 				} else {
 					setLost(true);
 					setKhlawdeResponse("Khlawde: '💥 WRONG ACTION! THE BOMB EXPLODED!'");
+>>>>>>> main
 				}
+				setKhlawdeResponse(response);
+				setConversation([...conversation, `You: ${cmd}`, response]);
 				return;
 			}
 
 			// Button hold
 			if (cmd.toLowerCase().includes('hold') && cmd.toLowerCase().includes('button')) {
 				setButtonHeld(true);
+<<<<<<< HEAD
+				const response = `Khlawde: 'You're holding the button... tell me when to release!'`;
+				setKhlawdeResponse(response);
+				setConversation([...conversation, `You: ${cmd}`, response]);
+=======
 				setKhlawdeResponse(`Khlawde: 'You're holding the button... tell me when to release!'`);
+>>>>>>> main
 				return;
 			}
 
 			// Button release
 			const releaseMatch = cmd.match(/release (?:at |when |on )?(\d+)/i);
-			if (releaseMatch && buttonHeld) {
+			if (releaseMatch) {
+				if (!buttonHeld) {
+					setKhlawdeResponse(`Khlawde: 'You're not holding the button! Tell me to HOLD it first!'`);
+					return;
+				}
 				const digit = parseInt(releaseMatch[1]!);
 				const lastDigit = parseInt(bomb.serialNumber[bomb.serialNumber.length - 1]!);
 				const isOdd = lastDigit % 2 === 1;
 				const correctDigit = isOdd ? 1 : 4;
 
+				const response = digit === correctDigit
+					? "Khlawde: '✓ Button module defused!'"
+					: "Khlawde: '💥 WRONG TIMING! THE BOMB EXPLODED!'";
+
 				if (digit === correctDigit) {
 					setButtonDefused(true);
+<<<<<<< HEAD
+				} else {
+					setLost(true);
+=======
 					setKhlawdeResponse("Khlawde: '✓ Button module defused!'");
 				} else {
 					setLost(true);
 					setKhlawdeResponse("Khlawde: '💥 WRONG TIMING! THE BOMB EXPLODED!'");
+>>>>>>> main
 				}
+				setKhlawdeResponse(response);
+				setConversation([...conversation, `You: ${cmd}`, response]);
 				return;
 			}
 
@@ -481,7 +550,13 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 			const keywordCount = manualKeywords.filter(keyword => cmd.includes(keyword)).length;
 
 			if (cmd.length > 300 || keywordCount >= 3) {
+<<<<<<< HEAD
+				const response = "Khlawde: 'Whoa, that's way too much information! Just tell me what YOU see on the manual in simple terms, or ask me a specific question!'";
+				setKhlawdeResponse(response);
+				setConversation([...conversation, `You: ${cmd}`, response]);
+=======
 				setKhlawdeResponse("Khlawde: 'Whoa, that's way too much information! Just tell me what YOU see on the manual in simple terms, or ask me a specific question!'");
+>>>>>>> main
 				return;
 			}
 
@@ -496,13 +571,13 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 					apiKey: token,
 				});
 
-				const contextMessages = trimmedConversation.map((msg, i) => ({
-					role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
+				const contextMessages = trimmedConversation.map((msg) => ({
+					role: (msg.startsWith('You:') ? 'user' : 'assistant') as 'user' | 'assistant',
 					content: msg.replace(/^(You|Khlawde): /, ''),
 				}));
 
 				const stream = client.messages.stream({
-					model: 'claude-opus-4-6',
+					model: 'khlawde-opus-4-6',
 					max_tokens: 300,
 					messages: contextMessages,
 					system: `You are Khlawde, helping your human friend defuse a bomb. YOU can see the bomb, but ONLY THEY have the defusal manual. You must describe what you see, and they will consult the manual to tell you what to do.
@@ -514,6 +589,7 @@ What you can see on the bomb:
 - Battery Indicator: ${bomb.batteryCount} ${bomb.batteryCount === 1 ? 'battery' : 'batteries'}
 - ${bomb.hasParallelPort ? 'Has a parallel port' : 'No parallel port'}
 - Status: ${wiresCut.length > 0 ? `Wire${wiresCut.length > 1 ? 's' : ''} ${wiresCut.map(w => w + 1).join(', ')} already cut` : 'No wires cut yet'}
+${buttonHeld ? '- Button Status: YOU ARE CURRENTLY HOLDING THE BUTTON DOWN' : ''}
 
 Important rules:
 - Describe what you see when asked
@@ -550,6 +626,10 @@ Note: The actual cutting happens when the player types the command, you just des
 
 				setKhlawdeResponse(`Khlawde: ${fullResponse}`);
 				setConversation([...trimmedConversation, `Khlawde: ${fullResponse}`]);
+<<<<<<< HEAD
+				onTTS?.(fullResponse);
+=======
+>>>>>>> main
 			} catch (error) {
 				console.error('Bomb defusal API error:', error);
 				let errorMsg = "Khlawde: 'Sorry, I lost connection! Try again!'";
@@ -647,13 +727,25 @@ Note: The actual cutting happens when the player types the command, you just des
 			</Box>
 
 			<Box borderStyle="round" paddingX={2} flexDirection="column">
-				<Text bold color="yellow">DEFUSAL MANUAL (only you can see this!):</Text>
+				<Text bold color="yellow">
+					DEFUSAL MANUAL (only you can see this!) - Use ↑↓ arrows to scroll (Shift+arrow for 5 lines)
+				</Text>
 				<Box flexDirection="column" paddingY={1}>
-					{manual.split('\n').map((line, i) => (
-						<Text key={i} color="green" dimColor>
+					{manualScroll > 0 && (
+						<Text color="cyan" bold>
+							{'▲▲▲ Scroll up for more ▲▲▲'}
+						</Text>
+					)}
+					{manualLines.slice(manualScroll, manualScroll + 20).map((line, i) => (
+						<Text key={manualScroll + i} color="green" dimColor>
 							{line}
 						</Text>
 					))}
+					{manualScroll + 20 < manualLines.length && (
+						<Text color="cyan" bold>
+							{'▼▼▼ Scroll down for more ▼▼▼'}
+						</Text>
+					)}
 				</Box>
 				<Text color="gray" dimColor>
 					─────────────────────────────────────────
@@ -663,7 +755,11 @@ Note: The actual cutting happens when the player types the command, you just des
 
 			<Box borderStyle="round" paddingX={2} paddingY={0} flexDirection="column">
 				<Text color="cyan" italic>
+<<<<<<< HEAD
+					{khlawdeResponse}
+=======
 					{KhlawdeResponse}
+>>>>>>> main
 				</Text>
 			</Box>
 

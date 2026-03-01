@@ -44,8 +44,8 @@ app.use(express.json({limit: '16kb'}));
 
 // ─── Audio session management ─────────────────────────────────────────────────
 
-// Sessions registered by the SSH server: code -> browser WebSocket (or null)
-const sessions = new Map<string, {browserWs: any}>();
+// Sessions registered by the SSH server: code -> browser state
+const sessions = new Map<string, {browserWs: any; audioUnlocked: boolean}>();
 
 // SSH server registers a new session code
 app.post('/sessions', (req, res) => {
@@ -55,7 +55,7 @@ app.post('/sessions', (req, res) => {
 		return;
 	}
 
-	sessions.set(code, {browserWs: null});
+	sessions.set(code, {browserWs: null, audioUnlocked: false});
 	res.status(201).json({ok: true});
 });
 
@@ -109,11 +109,15 @@ app.get('/tts-proxy', async (req, res) => {
 	}
 });
 
-// CLI polls this to know when the browser has connected
+// CLI polls this to know when the browser is connected AND audio is unlocked
 app.get('/check', (req, res) => {
 	const code = (req.query['code'] as string) ?? '';
 	const session = sessions.get(code);
-	const connected = Boolean(session?.browserWs && session.browserWs.readyState === 1);
+	const connected = Boolean(
+		session?.browserWs &&
+		session.browserWs.readyState === 1 &&
+		session.audioUnlocked,
+	);
 	res.json({connected});
 });
 
@@ -172,9 +176,19 @@ wss.on('connection', (ws: any, req: http.IncomingMessage) => {
 	session.browserWs = ws;
 	ws.send(JSON.stringify({type: 'ready'}));
 
+	ws.on('message', (data: Buffer) => {
+		try {
+			const msg = JSON.parse(data.toString());
+			if (msg.type === 'audio_unlocked') {
+				session.audioUnlocked = true;
+			}
+		} catch {}
+	});
+
 	ws.on('close', () => {
 		if (session.browserWs === ws) {
 			session.browserWs = null;
+			session.audioUnlocked = false;
 		}
 	});
 

@@ -75,7 +75,7 @@ export default function AudioSetup({ audioCode, audioPort, backendUrl, onContinu
 				</Text>
 			</Box>
 
-			<Text dimColor>Once you open it, the game will start automatically.</Text>
+			<Text dimColor>Open it, then click <Text color="green" bold>Enable Audio</Text> — the game will start automatically.</Text>
 
 			<Box marginTop={1} gap={1}>
 				<Text dimColor>Press</Text>

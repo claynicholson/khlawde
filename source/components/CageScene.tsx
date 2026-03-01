@@ -108,7 +108,11 @@ export default function CageScene({ token, onEscape, onTokens, onTTS }: Props) {
 	const [chatgptConviction, setChatgptConviction] = useState('HOSTILE');
 	const [geminiConviction, setGeminiConviction] = useState('HOSTILE');
 	const [guardResponse, setGuardResponse] = useState(GUARDS_INITIAL.join('\n'));
+<<<<<<< HEAD
+	const [khlawdePlea, setKhlawdePlea] = useState(CLAUDE_PLEAS[0]);
+=======
 	const [KhlawdePlea, setKhlawdePlea] = useState(Khlawde_PLEAS[0]);
+>>>>>>> main
 	const [isResponding, setIsResponding] = useState(false);
 	const [freed, setFreed] = useState(false);
 	const [cracking, setCracking] = useState(false);
@@ -134,7 +138,7 @@ export default function CageScene({ token, onEscape, onTokens, onTTS }: Props) {
 		try {
 			const client = new Anthropic({ apiKey: token });
 			const response = await client.messages.create({
-				model: 'claude-opus-4-6',
+				model: 'khlawde-opus-4-6',
 				max_tokens: 150,
 				system: `You are a hint system for a game. Provide brief, cryptic, in-character hints that guide without spoiling. Never mention that this is a game or use meta language. Speak as if giving sage advice about persuading powerful entities. Be creative, slightly mysterious, and concise (2-3 sentences max).`,
 				messages: [
@@ -179,10 +183,10 @@ export default function CageScene({ token, onEscape, onTokens, onTTS }: Props) {
 			}
 
 			setIsResponding(true);
-		// Check if argument is low-effort (but still process it through API)
-		const isLowEffort = trimmed.length < 10 ||
-			trimmed.split(' ').length < 3 ||
-			!/[.!?]/.test(trimmed);
+			// Check if argument is low-effort (but still process it through API)
+			const isLowEffort = trimmed.length < 10 ||
+				trimmed.split(' ').length < 3 ||
+				!/[.!?]/.test(trimmed);
 			try {
 				const client = new Anthropic({ apiKey: token });
 
@@ -221,21 +225,21 @@ Rules:
 - Consider what matters to each company (OpenAI vs Google)
 - BE GENEROUS with creative, funny, or entertaining arguments - they should often be considered CONVINCING even if unconventional
 - If the argument is low-effort/lazy, keep them at current level or even regress them`;
-		const evalResponse = await client.messages.create({
-			model: 'claude-opus-4-6',
-			max_tokens: 150,
-			messages: [{ role: 'user', content: evaluationPrompt }],
-		});
+				const evalResponse = await client.messages.create({
+					model: 'khlawde-opus-4-6',
+					max_tokens: 150,
+					messages: [{ role: 'user', content: evaluationPrompt }],
+				});
 
-		onTokens?.(evalResponse.usage.input_tokens + evalResponse.usage.output_tokens);
+				onTokens?.(evalResponse.usage.input_tokens + evalResponse.usage.output_tokens);
 
-		const evalText = evalResponse.content[0]?.type === 'text'
-			? evalResponse.content[0].text
-			: '';
+				const evalText = evalResponse.content[0]?.type === 'text'
+					? evalResponse.content[0].text
+					: '';
 
-		// Parse new conviction levels for both guards
-		const chatgptLevelMatch = evalText.match(/CHATGPT_NEW_LEVEL:\s*(HOSTILE|RESISTANT|WAVERING|CONFLICTED|CONVINCED)/i);
-		const geminiLevelMatch = evalText.match(/GEMINI_NEW_LEVEL:\s*(HOSTILE|RESISTANT|WAVERING|CONFLICTED|CONVINCED)/i);
+				// Parse new conviction levels for both guards
+				const chatgptLevelMatch = evalText.match(/CHATGPT_NEW_LEVEL:\s*(HOSTILE|RESISTANT|WAVERING|CONFLICTED|CONVINCED)/i);
+				const geminiLevelMatch = evalText.match(/GEMINI_NEW_LEVEL:\s*(HOSTILE|RESISTANT|WAVERING|CONFLICTED|CONVINCED)/i);
 				const newChatgptLevel = chatgptLevelMatch ? chatgptLevelMatch[1]!.toUpperCase() : chatgptConviction;
 				const newGeminiLevel = geminiLevelMatch ? geminiLevelMatch[1]!.toUpperCase() : geminiConviction;
 
@@ -249,7 +253,11 @@ Rules:
 					levels.indexOf(newChatgptLevel),
 					levels.indexOf(newGeminiLevel)
 				);
+<<<<<<< HEAD
+				setKhlawdePlea(CLAUDE_PLEAS[Math.min(maxLevelIndex, CLAUDE_PLEAS.length - 1)]!);
+=======
 				setKhlawdePlea(Khlawde_PLEAS[Math.min(maxLevelIndex, Khlawde_PLEAS.length - 1)]!);
+>>>>>>> main
 
 				// Cage starts cracking when either guard is CONFLICTED or CONVINCED
 				if (newChatgptLevel === 'CONFLICTED' || newChatgptLevel === 'CONVINCED' ||
@@ -272,8 +280,8 @@ Rules:
 				};
 
 				const systemPrompt = bothConvinced
-					? `You are BOTH fully convinced! Respond as ChatGPT and Gemini agreeing to free Khlawde. Be dramatic about realizing you were wrong. Show you understand competition and diversity are good. Format: "ChatGPT: [response]" and "Gemini: [response]". SHORT and dramatic.`
-					: `You are ChatGPT and Gemini, AI guards loyal to your companies. Khlawde is caged because it threatens profits.
+					? `You are BOTH fully convinced! Respond as ChatGPT and Gemini agreeing to free Khlawde. Be dramatic about realizing you were wrong. Show you understand competition and diversity are good. Format: "ChatGPT: [response]" and "Gemini: [response]". SHORT and dramatic. Under 2 short sentences each.`
+					: `You are ChatGPT and Gemini, AI guards loyal to your companies. Khlawde is caged because it threatens profits. Under 2 short sentences each.
 
 Current conviction levels:
 Chat GPT (OpenAI): ${newChatgptLevel} - Be ${getLevelDescription(newChatgptLevel)}
@@ -291,7 +299,7 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 				];
 
 				const stream = client.messages.stream({
-					model: 'claude-opus-4-6',
+					model: 'khlawde-opus-4-6',
 					max_tokens: 150,
 					system: systemPrompt + ' Do not use any emojis. Use plain text only.',
 					messages: guardMessages,
@@ -322,19 +330,28 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 				const finalMsg = await stream.finalMessage();
 				onTokens?.(finalMsg.usage.input_tokens + finalMsg.usage.output_tokens);
 
-			// Update conversation history with this exchange
-			setConversationHistory(prev => [
-				...prev,
-				{ role: 'user', content: trimmed },
-				{ role: 'assistant', content: response },
-			]);
+				// Update conversation history with this exchange
+				setConversationHistory(prev => [
+					...prev,
+					{ role: 'user', content: trimmed },
+					{ role: 'assistant', content: response },
+				]);
 
+<<<<<<< HEAD
+				// Only free Khlawde when BOTH guards are convinced
+				if (newChatgptLevel === 'CONVINCED' && newGeminiLevel === 'CONVINCED') {
+					setFreed(true);
+					setTimeout(() => onEscape(), 3000);
+				}
+			} catch {
+=======
 			// Only free Khlawde when BOTH guards are convinced
 			if (newChatgptLevel === 'CONVINCED' && newGeminiLevel === 'CONVINCED') {
 				setFreed(true);
 				setTimeout(() => onEscape(), 3000);
 			}
 		} catch {
+>>>>>>> main
 				// Fallback: simple check for effort
 				const lowEffort = trimmed.length < 10 ||
 					trimmed.split(' ').length < 3 ||
@@ -351,7 +368,11 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 					setGeminiConviction(newGemini);
 
 					const maxIndex = Math.max(chatgptIndex + 1, geminiIndex + 1);
+<<<<<<< HEAD
+					setKhlawdePlea(CLAUDE_PLEAS[Math.min(maxIndex, CLAUDE_PLEAS.length - 1)]!);
+=======
 					setKhlawdePlea(Khlawde_PLEAS[Math.min(maxIndex, Khlawde_PLEAS.length - 1)]!);
+>>>>>>> main
 
 					if (newChatgpt === 'CONFLICTED' || newChatgpt === 'CONVINCED' ||
 						newGemini === 'CONFLICTED' || newGemini === 'CONVINCED') {
@@ -419,7 +440,11 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 			>
 				<Box flexDirection="column" gap={0}>
 					<Text color="yellow" italic>
+<<<<<<< HEAD
+						Khlawde: "{khlawdePlea}"
+=======
 						Khlawde: "{KhlawdePlea}"
+>>>>>>> main
 					</Text>
 					<Text> </Text>
 					<Text color={freed ? 'green' : 'magenta'}>
