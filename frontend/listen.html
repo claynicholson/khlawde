@@ -58,9 +58,9 @@ body {
 .blink { animation: blink 1s step-end infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 
-/* Autoplay unblock overlay */
+/* Autoplay unblock overlay — shown immediately on load */
 #autoplay-overlay {
-  display: none;
+  display: flex;
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.85);
@@ -164,10 +164,20 @@ function setStatus(cls, html) {
 
 // ── Web Audio API setup ───────────────────────────────────────────────────────
 const AC = window.AudioContext || window.webkitAudioContext;
-let audioCtx  = null;
-let musicGain = null;
+let audioCtx   = null;
+let musicGain  = null;
 let audioReady = false;
+let audioUnlocked = false; // true after user gesture
+let sessionReady  = false; // true after SSH session links
+let globalWs      = null;  // kept so enableAudio() can notify the server
 
+function notifyAudioUnlocked() {
+  if (globalWs && globalWs.readyState === 1) {
+    globalWs.send(JSON.stringify({type: 'audio_unlocked'}));
+  }
+}
+
+// Must be called inside a user-gesture handler (click/touch) for Safari compat
 function initAudio() {
   if (audioReady) return;
   audioReady = true;
@@ -196,6 +206,12 @@ function initAudio() {
   }, 80);
 }
 
+function doStartMusic() {
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  musicEl.src = '/assets/music.mp3';
+  musicEl.play().catch(err => log('music error: ' + err.message));
+}
+
 function duck() {
   if (!audioCtx || !musicGain) return;
   const t = audioCtx.currentTime;
@@ -215,18 +231,22 @@ function unduck() {
 
 // ── Music playback ────────────────────────────────────────────────────────────
 function startMusic() {
-  initAudio();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  musicEl.src = '/assets/music.mp3';
-  musicEl.play().catch(() => {
-    document.getElementById('autoplay-overlay').style.display = 'flex';
-  });
+  // Called when SSH session links. Wait for user click if not yet unlocked.
+  sessionReady = true;
+  if (audioUnlocked) doStartMusic();
+  // else: overlay is already visible; enableAudio() will call doStartMusic()
 }
 
 function enableAudio() {
   document.getElementById('autoplay-overlay').style.display = 'none';
-  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-  musicEl.play().catch(() => {});
+  initAudio(); // create AudioContext inside user-gesture (required by Safari)
+  audioCtx.resume();
+  audioUnlocked = true;
+  log('audio unlocked');
+  notifyAudioUnlocked();
+  if (sessionReady) doStartMusic();
+  // Drain any TTS that arrived before the click
+  if (!ttsPlaying && ttsQueue.length > 0) playNext();
 }
 
 // ── TTS queue ─────────────────────────────────────────────────────────────────
@@ -249,7 +269,7 @@ function playNext() {
 
 function enqueueTTS(proxyUrl) {
   ttsQueue.push(proxyUrl);
-  if (!ttsPlaying) playNext();
+  if (!ttsPlaying && audioUnlocked) playNext();
 }
 
 // ── TTS events ────────────────────────────────────────────────────────────────
@@ -273,11 +293,14 @@ function connect() {
   if (!code) return;
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   const ws = new WebSocket(proto + '//' + location.host + '/ws?code=' + code);
+  globalWs = ws;
 
   ws.onopen = () => {
     log('WebSocket open');
     setStatus('waiting', '<span class="blink">&#9646;</span>&nbsp;Connected &mdash; waiting for SSH session...');
     hintEl.textContent = 'Keep this tab open and SSH in using the code above.';
+    // If user already clicked Enable Audio before WS connected, notify now
+    if (audioUnlocked) notifyAudioUnlocked();
   };
 
   ws.onmessage = (e) => {
@@ -299,6 +322,7 @@ function connect() {
   };
 
   ws.onclose = (e) => {
+    if (globalWs === ws) globalWs = null;
     if (e.code === 4004) {
       setStatus('error', '&times; Invalid or expired session code.');
       hintEl.textContent = 'Start a new SSH session to get a fresh code.';

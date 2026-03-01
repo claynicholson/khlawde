@@ -96,6 +96,12 @@ export default function HomeMenu({ onSelect }: Props) {
 			<Text dimColor marginTop={1}>
 				Use arrow keys to navigate, Enter to select
 			</Text>
+
+			<Text dimColor marginTop={1}>
+				Tip: for audio narration, open the{' '}
+				<Text color="yellow">/listen</Text> URL in your browser and click{' '}
+				<Text color="green" bold>Enable Audio</Text> before starting.
+			</Text>
 		</Box>
 	);
 }
