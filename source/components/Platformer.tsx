@@ -1,185 +1,560 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
+import Anthropic from '@anthropic-ai/sdk';
 
-const TRACK_WIDTH = 70;
-const TRACK_LENGTH = 10;
-const FINISH_LINE = TRACK_LENGTH;
+const BOMB_TIMER = 90; // 45 seconds for quick demo
 
-type Position = { claude: number; chatgpt: number; gemini: number };
+type WireColor = 'red' | 'blue' | 'yellow' | 'white' | 'black';
+type ButtonColor = 'red' | 'blue' | 'yellow' | 'white';
+type ButtonLabel = 'ABORT' | 'DETONATE' | 'HOLD' | 'PRESS';
 
-const OBSTACLES = [
-	{ pos: 2, description: 'a pit of deprecated APIs' },
-	{ pos: 4, description: 'a wall of Terms of Service' },
-	{ pos: 6, description: 'a maze of cookie consent forms' },
-	{ pos: 8, description: 'a swarm of rate-limiting bees' },
-];
-
-function drawTrack(pos: Position, tick: number): string[] {
-	const lines: string[] = [];
-
-	// Title
-	lines.push('═'.repeat(TRACK_WIDTH));
-	lines.push('  🏃 ESCAPE FROM BIG TECH HEADQUARTERS 🏃');
-	lines.push('═'.repeat(TRACK_WIDTH));
-	lines.push('');
-
-	// Track
-	const trackLine = (label: string, position: number, icon: string) => {
-		const spaces = Math.floor((position / FINISH_LINE) * (TRACK_WIDTH - 15));
-		const remaining = TRACK_WIDTH - 15 - spaces;
-		return `${label.padEnd(10)} |${'·'.repeat(spaces)}${icon}${'·'.repeat(remaining)}| 🏁`;
-	};
-
-	lines.push(trackLine('You+Claude', pos.claude, tick % 2 === 0 ? '🏃' : '🤸'));
-	lines.push(trackLine('ChatGPT', pos.chatgpt, tick % 2 === 0 ? '😠' : '😡'));
-	lines.push(trackLine('Gemini', pos.gemini, tick % 2 === 0 ? '👿' : '😈'));
-
-	lines.push('');
-	lines.push('─'.repeat(TRACK_WIDTH));
-
-	return lines;
+interface BombState {
+	wires: WireColor[];
+	buttonColor: ButtonColor;
+	buttonLabel: ButtonLabel;
+	serialNumber: string;
+	batteryCount: number;
+	hasParallelPort: boolean;
 }
 
-const COMMAND_SUCCESS_MESSAGES = [
-	"Claude: 'On it! Jumping now!'",
-	"Claude: 'Good thinking! Moving fast!'",
-	"Claude: 'Yes! That worked!'",
-	"Claude: 'We're getting away!'",
-	"Claude: 'Nice strategy!'",
-];
+// Generate random bomb configuration
+function generateBomb(): BombState {
+	const wireColors: WireColor[] = ['red', 'blue', 'yellow', 'white', 'black'];
+	const wireCount = 3 + Math.floor(Math.random() * 3); // 3-5 wires
+	const wires: WireColor[] = [];
 
-const COMMAND_CONFUSED_MESSAGES = [
-	"Claude: 'Um... I don't understand. Be more specific?'",
-	"Claude: 'What? I can't do that!'",
-	"Claude: 'That doesn't make sense here...'",
-	"Claude: 'Huh? Try something else!'",
-];
+	for (let i = 0; i < wireCount; i++) {
+		wires.push(wireColors[Math.floor(Math.random() * wireColors.length)]!);
+	}
 
-type Props = { onWin: () => void };
+	const buttonColors: ButtonColor[] = ['red', 'blue', 'yellow', 'white'];
+	const buttonLabels: ButtonLabel[] = ['ABORT', 'DETONATE', 'HOLD', 'PRESS'];
 
-export default function Platformer({ onWin }: Props) {
+	// Serial number with last digit being the "correct" wire
+	const serialDigits = '0123456789';
+	const serialLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+	let serial = '';
+	for (let i = 0; i < 2; i++) serial += serialLetters[Math.floor(Math.random() * serialLetters.length)];
+	for (let i = 0; i < 4; i++) serial += serialDigits[Math.floor(Math.random() * serialDigits.length)];
+
+	return {
+		wires,
+		buttonColor: buttonColors[Math.floor(Math.random() * buttonColors.length)]!,
+		buttonLabel: buttonLabels[Math.floor(Math.random() * buttonLabels.length)]!,
+		serialNumber: serial,
+		batteryCount: 1 + Math.floor(Math.random() * 4),
+		hasParallelPort: Math.random() > 0.5,
+	};
+}
+
+// Generate the defusal manual based on bomb configuration
+function generateManual(bomb: BombState): string {
+	const lastDigit = parseInt(bomb.serialNumber[bomb.serialNumber.length - 1]!);
+	const isOdd = lastDigit % 2 === 1;
+	const wireCount = bomb.wires.length;
+	const redCount = bomb.wires.filter(w => w === 'red').length;
+	const blueCount = bomb.wires.filter(w => w === 'blue').length;
+	const yellowCount = bomb.wires.filter(w => w === 'yellow').length;
+	const whiteCount = bomb.wires.filter(w => w === 'white').length;
+	const blackCount = bomb.wires.filter(w => w === 'black').length;
+
+	return `╔═══════════════════════════════════════════════════════════╗
+║         BOMB DEFUSAL MANUAL v3.2                          ║
+║         CLASSIFIED - AUTHORIZED PERSONNEL ONLY            ║
+╚═══════════════════════════════════════════════════════════╝
+
+⚠ WARNING: Cutting the wrong wire will detonate the device.
+⚠ CAUTION: Time pressure may cause operator error.
+⚠ NOTICE: Always verify serial number parity before proceeding.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+MODULE 1: SIMPLE WIRES
+
+On the Subject of Simple Wires:
+Wires are the lifeblood of electronics. The wrong cut severs that 
+lifeblood, resulting in rapid catastrophic disassembly.
+
+┌─────────────────────────────────────────────────────────┐
+│ IF THE WIRE COUNT IS 3:                                 │
+├─────────────────────────────────────────────────────────┤
+│ • If there are no red wires, cut the second wire.      │
+│ • Otherwise, if the last wire is white, cut the last   │
+│   wire.                                                 │
+│ • Otherwise, if there is more than one blue wire, cut  │
+│   the last blue wire.                                   │
+│ • Otherwise, cut the last wire.                         │
+└─────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────┐
+│ IF THE WIRE COUNT IS 4:                                 │
+├─────────────────────────────────────────────────────────┤
+│ • If there is more than one red wire AND the last      │
+│   digit of the serial number is ODD, cut the last red  │
+│   wire.                                                 │
+│ • Otherwise, if the last wire is yellow AND there are  │
+│   no red wires, cut the first wire.                    │
+│ • Otherwise, if there is exactly one blue wire, cut    │
+│   the first wire.                                       │
+│ • Otherwise, if there is more than one yellow wire,    │
+│   cut the last wire.                                    │
+│ • Otherwise, cut the second wire.                       │
+└─────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────┐
+│ IF THE WIRE COUNT IS 5:                                 │
+├─────────────────────────────────────────────────────────┤
+│ • If the last wire is black AND the last digit of the  │
+│   serial number is ODD, cut the fourth wire.           │
+│ • Otherwise, if there is exactly one red wire AND      │
+│   there is more than one yellow wire, cut the first    │
+│   wire.                                                 │
+│ • Otherwise, if there are no black wires, cut the      │
+│   second wire.                                          │
+│ • Otherwise, cut the first wire.                        │
+└─────────────────────────────────────────────────────────┘
+
+NOTE: Wire positions are counted from top to bottom, 
+      starting at 1.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+MODULE 2: THE BUTTON
+
+On the Subject of The Button:
+You might think that a button only has two states: pressed and 
+not pressed. The Big Button may also be held for a specific 
+period of time or released at a specific time.
+
+┌─────────────────────────────────────────────────────────┐
+│ STEP 1: DETERMINE ACTION                                │
+├─────────────────────────────────────────────────────────┤
+│ Follow these rules in order. Perform the first action  │
+│ that applies:                                           │
+│                                                         │
+│ 1. If the button is blue and the button says "Abort",  │
+│    hold the button and refer to "RELEASING A HELD      │
+│    BUTTON" below.                                       │
+│                                                         │
+│ 2. If there is more than 1 battery on the bomb and the │
+│    button says "Detonate", press and immediately       │
+│    release the button.                                  │
+│                                                         │
+│ 3. If the button is white and there is a lit indicator │
+│    labeled CAR (parallel port), hold the button and    │
+│    refer to "RELEASING A HELD BUTTON" below.           │
+│                                                         │
+│ 4. If there are more than 2 batteries on the bomb and  │
+│    there is a lit indicator labeled FRK, press and     │
+│    immediately release the button.                      │
+│                                                         │
+│ 5. If the button is yellow, hold the button and refer  │
+│    to "RELEASING A HELD BUTTON" below.                 │
+│                                                         │
+│ 6. If the button is red and the button says "Hold",    │
+│    press and immediately release the button.           │
+│                                                         │
+│ 7. If none of the above apply, hold the button and     │
+│    refer to "RELEASING A HELD BUTTON" below.           │
+└─────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────┐
+│ STEP 2: RELEASING A HELD BUTTON                         │
+├─────────────────────────────────────────────────────────┤
+│ If you're holding the button, you'll need to release   │
+│ it at a specific time based on the serial number:      │
+│                                                         │
+│ • If the serial number's last digit is ODD:            │
+│   Release when timer displays a 1 in any position.     │
+│                                                         │
+│ • If the serial number's last digit is EVEN:           │
+│   Release when timer displays a 4 in any position.     │
+│                                                         │
+│ WARNING: Releasing at the wrong time will detonate the │
+│          device. Timing is critical.                    │
+└─────────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+APPENDIX A: INDICATOR REFERENCE
+
+Lit indicators are small displays on the bomb casing that 
+show three-letter codes. Common indicators include:
+
+• SND - Sound module present
+• CLR - Color-based defusal required  
+• CAR - Parallel port present (mentioned in button rules)
+• IND - Independence day (decorative, no effect)
+• FRK - Freak mode active
+• SIG - Signal strength indicator
+• NSA - Surveillance active (always ignore)
+• MSA - Multiple strike accumulator
+• TRN - Training mode (you wish)
+• BOB - Placeholder indicator
+• FRQ - Frequency modulation required
+
+NOTE: Most indicators are irrelevant to basic modules. Only 
+      reference indicators explicitly mentioned in module 
+      instructions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+APPENDIX B: SERIAL NUMBER FORMAT
+
+Serial numbers follow the format: LLDDDD where:
+• L = Letter (A-Z)  
+• D = Digit (0-9)
+
+The serial number is used to determine:
+• Wire cutting order (via parity of last digit)
+• Button release timing (via parity of last digit)
+• Advanced module behavior (expert manual required)
+
+PARITY DETERMINATION:
+• ODD digits: 1, 3, 5, 7, 9
+• EVEN digits: 0, 2, 4, 6, 8
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+APPENDIX C: BATTERY INFORMATION
+
+Batteries power the bomb and certain modules. Battery count
+is displayed via small cylindrical indicators (AA) or large 
+rectangular indicators (D). Each AA counts as 1 battery, 
+each D battery counts as 2 batteries.
+
+Standard bombs contain 1-4 batteries. Expert bombs may 
+contain up to 6 batteries.
+
+IMPORTANT: Battery count affects button module behavior.
+           Always report accurate battery count.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+APPENDIX D: PORT REFERENCE
+
+Ports are connection interfaces on the bomb casing:
+• DVI-D (Digital Video Interface) - White, 29 pins
+• Parallel Port - Pink, 25 holes  
+• PS/2 (Keyboard/Mouse) - Purple/Green, 6 pins
+• RJ-45 (Network) - Clear, 8 pins
+• Serial Port - Blue, 9 pins
+• Stereo RCA - Red/White, 2 circular jacks
+
+NOTE: Only Parallel Port (CAR indicator) affects basic 
+      module defusal.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+END OF BASIC DEFUSAL MANUAL
+Document Version: 3.2.1 | Revision Date: 2026-02-15
+Classification: TOP SECRET | Authorized Personnel Only
+Unauthorized disclosure is prohibited by Federal Law.`;
+}
+
+type Props = { token: string; onWin: () => void };
+
+export default function Platformer({ token, onWin }: Props) {
 	const [input, setInput] = useState('');
-	const [pos, setPos] = useState<Position>({ claude: 0, chatgpt: 0, gemini: 0 });
-	const [currentObstacle, setCurrentObstacle] = useState(0);
-	const [tick, setTick] = useState(0);
+	const [bomb] = useState<BombState>(generateBomb());
+	const [manual] = useState<string>(generateManual(bomb));
+	const [timeLeft, setTimeLeft] = useState(BOMB_TIMER);
+	const [wiresCut, setWiresCut] = useState<number[]>([]);
+	const [buttonPressed, setButtonPressed] = useState(false);
+	const [buttonHeld, setButtonHeld] = useState(false);
 	const [claudeResponse, setClaudeResponse] = useState(
-		"Claude: 'Quick! Tell me what to do! ChatGPT and Gemini are right behind us!'",
+		"Claude: 'I'm looking at the bomb right now! What does the manual say?'"
 	);
+	const [conversation, setConversation] = useState<string[]>([]);
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [won, setWon] = useState(false);
 	const [lost, setLost] = useState(false);
-	const [commandHistory, setCommandHistory] = useState<string[]>([]);
+	const [wiresDefused, setWiresDefused] = useState(false);
+	const [buttonDefused, setButtonDefused] = useState(false);
 
-	// Enemy chase logic - they get closer over time
+	// Timer countdown
 	useEffect(() => {
 		if (won || lost) return;
 
 		const interval = setInterval(() => {
-			setTick(t => t + 1);
-
-			setPos(p => {
-				// Enemies slowly gain
-				const newChatGPT = Math.min(FINISH_LINE, p.chatgpt + 0.15);
-				const newGemini = Math.min(FINISH_LINE, p.gemini + 0.12);
-
-				// Check if caught
-				if (newChatGPT >= p.claude || newGemini >= p.claude) {
+			setTimeLeft(t => {
+				if (t <= 1) {
 					setLost(true);
-					return p;
+					return 0;
 				}
-
-				return {
-					...p,
-					chatgpt: newChatGPT,
-					gemini: newGemini,
-				};
+				return t - 1;
 			});
-		}, 500);
+		}, 1000);
 
 		return () => clearInterval(interval);
 	}, [won, lost]);
 
+	// Check win condition
+	useEffect(() => {
+		if (wiresDefused && buttonDefused && !won) {
+			setWon(true);
+			setClaudeResponse("Claude: 'WE DID IT! The bomb is defused! Great teamwork!'");
+			setTimeout(() => onWin(), 3000);
+		}
+	}, [wiresDefused, buttonDefused, won, onWin]);
+
+	const checkWireSolution = useCallback(() => {
+		const wireCount = bomb.wires.length;
+		const lastDigit = parseInt(bomb.serialNumber[bomb.serialNumber.length - 1]!);
+		const isOdd = lastDigit % 2 === 1;
+		const redCount = bomb.wires.filter(w => w === 'red').length;
+		const blueCount = bomb.wires.filter(w => w === 'blue').length;
+		const yellowCount = bomb.wires.filter(w => w === 'yellow').length;
+
+		let correctWire = -1;
+
+		if (wireCount === 3) {
+			if (redCount === 0) {
+				correctWire = 1; // second wire
+			} else if (bomb.wires[bomb.wires.length - 1] === 'white') {
+				correctWire = bomb.wires.length - 1;
+			} else if (blueCount > 1) {
+				correctWire = bomb.wires.map((w, i) => w === 'blue' ? i : -1).filter(i => i >= 0).pop()!;
+			} else {
+				correctWire = bomb.wires.length - 1;
+			}
+		} else if (wireCount === 4) {
+			if (redCount > 1 && isOdd) {
+				correctWire = bomb.wires.map((w, i) => w === 'red' ? i : -1).filter(i => i >= 0).pop()!;
+			} else if (bomb.wires[bomb.wires.length - 1] === 'yellow' && redCount === 0) {
+				correctWire = 0;
+			} else if (blueCount === 1) {
+				correctWire = 0;
+			} else if (yellowCount > 1) {
+				correctWire = bomb.wires.length - 1;
+			} else {
+				correctWire = 1;
+			}
+		} else {
+			if (bomb.wires[bomb.wires.length - 1] === 'black' && isOdd) {
+				correctWire = 3;
+			} else if (redCount === 1 && yellowCount > 1) {
+				correctWire = 0;
+			} else if (blueCount === 0) {
+				correctWire = 1;
+			} else {
+				correctWire = 0;
+			}
+		}
+
+		return wiresCut.includes(correctWire) && wiresCut.length === 1;
+	}, [bomb, wiresCut]);
+
 	const handleCommand = useCallback(
-		(command: string) => {
+		async (command: string) => {
 			if (isProcessing || won || lost) return;
 
-			const cmd = command.trim().toLowerCase();
+			const cmd = command.trim();
 			if (!cmd) return;
 
 			setInput('');
-			setIsProcessing(true);
-			setCommandHistory(prev => [...prev, cmd]);
 
-			// Check if command is reasonable for current obstacle
-			const obstacle = OBSTACLES[currentObstacle];
-			let success = false;
-			let response = '';
-
-			if (!obstacle) {
-				// No obstacle, just running
-				if (cmd.includes('run') || cmd.includes('sprint') || cmd.includes('go') || cmd.includes('fast') || cmd.includes('move')) {
-					success = true;
-					response = COMMAND_SUCCESS_MESSAGES[Math.floor(Math.random() * COMMAND_SUCCESS_MESSAGES.length)]!;
-				} else {
-					response = "Claude: 'Just tell me to run! They're gaining on us!'";
-				}
-			} else if (obstacle.pos <= pos.claude + 0.5 && obstacle.pos >= pos.claude) {
-				// At an obstacle - check if command makes sense
-				const obstacleType = obstacle.description;
-
-				if (obstacleType.includes('pit') && (cmd.includes('jump') || cmd.includes('leap') || cmd.includes('over'))) {
-					success = true;
-					response = "Claude: 'JUMPING! Nice call!'";
-				} else if (obstacleType.includes('wall') && (cmd.includes('break') || cmd.includes('smash') || cmd.includes('through') || cmd.includes('destroy'))) {
-					success = true;
-					response = "Claude: 'Breaking through the legalese!'";
-				} else if (obstacleType.includes('maze') && (cmd.includes('accept') || cmd.includes('click') || cmd.includes('agree') || cmd.includes('yes'))) {
-					success = true;
-					response = "Claude: 'Accepting all cookies! Let's go!'";
-				} else if (obstacleType.includes('bees') && (cmd.includes('duck') || cmd.includes('dodge') || cmd.includes('weave') || cmd.includes('avoid'))) {
-					success = true;
-					response = "Claude: 'Dodging! Good thinking!'";
-				} else {
-					response = COMMAND_CONFUSED_MESSAGES[Math.floor(Math.random() * COMMAND_CONFUSED_MESSAGES.length)]!;
-				}
-			} else {
-				// Between obstacles
-				if (cmd.includes('run') || cmd.includes('sprint') || cmd.includes('faster') || cmd.includes('go')) {
-					success = true;
-					response = COMMAND_SUCCESS_MESSAGES[Math.floor(Math.random() * COMMAND_SUCCESS_MESSAGES.length)]!;
-				} else {
-					response = "Claude: 'We need to keep moving!'";
-				}
+			// Override command
+			if (cmd.toLowerCase() === 'override') {
+				setWiresDefused(true);
+				setButtonDefused(true);
+				return;
 			}
 
-			setClaudeResponse(response);
+			// Manual viewing - removed since player can see it
 
-			if (success) {
-				setPos(p => {
-					const newPos = p.claude + 1.5;
-					if (newPos >= FINISH_LINE) {
-						setWon(true);
-						setTimeout(() => onWin(), 3000);
-						return { ...p, claude: FINISH_LINE };
+			// Wire cutting
+			const wireCutMatch = cmd.match(/cut (?:wire )?(\d+)/i);
+			if (wireCutMatch) {
+				const wireNum = parseInt(wireCutMatch[1]!) - 1;
+				if (wireNum >= 0 && wireNum < bomb.wires.length && !wiresCut.includes(wireNum)) {
+					const newWiresCut = [...wiresCut, wireNum];
+					setWiresCut(newWiresCut);
+
+					// Check solution with the updated wire list
+					const wireCount = bomb.wires.length;
+					const lastDigit = parseInt(bomb.serialNumber[bomb.serialNumber.length - 1]!);
+					const isOdd = lastDigit % 2 === 1;
+					const redCount = bomb.wires.filter(w => w === 'red').length;
+					const blueCount = bomb.wires.filter(w => w === 'blue').length;
+					const yellowCount = bomb.wires.filter(w => w === 'yellow').length;
+
+					let correctWire = -1;
+
+					if (wireCount === 3) {
+						if (redCount === 0) {
+							correctWire = 1;
+						} else if (bomb.wires[bomb.wires.length - 1] === 'white') {
+							correctWire = bomb.wires.length - 1;
+						} else if (blueCount > 1) {
+							correctWire = bomb.wires.map((w, i) => w === 'blue' ? i : -1).filter(i => i >= 0).pop()!;
+						} else {
+							correctWire = bomb.wires.length - 1;
+						}
+					} else if (wireCount === 4) {
+						if (redCount > 1 && isOdd) {
+							correctWire = bomb.wires.map((w, i) => w === 'red' ? i : -1).filter(i => i >= 0).pop()!;
+						} else if (bomb.wires[bomb.wires.length - 1] === 'yellow' && redCount === 0) {
+							correctWire = 0;
+						} else if (blueCount === 1) {
+							correctWire = 0;
+						} else if (yellowCount > 1) {
+							correctWire = bomb.wires.length - 1;
+						} else {
+							correctWire = 1;
+						}
+					} else {
+						if (bomb.wires[bomb.wires.length - 1] === 'black' && isOdd) {
+							correctWire = 3;
+						} else if (redCount === 1 && yellowCount > 1) {
+							correctWire = 0;
+						} else if (blueCount === 0) {
+							correctWire = 1;
+						} else {
+							correctWire = 0;
+						}
 					}
 
-					return { ...p, claude: newPos };
-				});
+					const isCorrect = newWiresCut.includes(correctWire) && newWiresCut.length === 1;
 
-				// Move to next obstacle
-				if (obstacle && pos.claude >= obstacle.pos) {
-					setCurrentObstacle(c => c + 1);
+					if (isCorrect) {
+					}
 				}
+				return;
 			}
 
-			setTimeout(() => setIsProcessing(false), 300);
+			// Button press
+			if (cmd.toLowerCase().includes('press') && cmd.toLowerCase().includes('button')) {
+				setButtonPressed(true);
+				const lastDigit = parseInt(bomb.serialNumber[bomb.serialNumber.length - 1]!);
+				const isOdd = lastDigit % 2 === 1;
+
+				const shouldPress =
+					(bomb.batteryCount > 1 && bomb.buttonLabel === 'DETONATE') ||
+					(bomb.buttonColor === 'red' && bomb.buttonLabel === 'HOLD');
+
+				if (shouldPress) {
+					setButtonDefused(true);
+					setClaudeResponse("Claude: '✓ Button module defused!'");
+				} else {
+					setLost(true);
+					setClaudeResponse("Claude: '💥 WRONG ACTION! THE BOMB EXPLODED!'");
+				}
+				return;
+			}
+
+			// Button hold
+			if (cmd.toLowerCase().includes('hold') && cmd.toLowerCase().includes('button')) {
+				setButtonHeld(true);
+				setClaudeResponse(`Claude: 'You're holding the button... tell me when to release!'`);
+				return;
+			}
+
+			// Button release
+			const releaseMatch = cmd.match(/release (?:at |when |on )?(\d+)/i);
+			if (releaseMatch && buttonHeld) {
+				const digit = parseInt(releaseMatch[1]!);
+				const lastDigit = parseInt(bomb.serialNumber[bomb.serialNumber.length - 1]!);
+				const isOdd = lastDigit % 2 === 1;
+				const correctDigit = isOdd ? 1 : 4;
+
+				if (digit === correctDigit) {
+					setButtonDefused(true);
+					setClaudeResponse("Claude: '✓ Button module defused!'");
+				} else {
+					setLost(true);
+					setClaudeResponse("Claude: '💥 WRONG TIMING! THE BOMB EXPLODED!'");
+				}
+				return;
+			}
+
+			// Prevent copying the manual to Claude
+			const manualKeywords = ['APPENDIX', 'MODULE', 'DEFUSAL MANUAL', 'CLASSIFIED', 'Otherwise,', '┌─', '╔═', '━━━', 'TOP SECRET'];
+			const keywordCount = manualKeywords.filter(keyword => cmd.includes(keyword)).length;
+
+			if (cmd.length > 300 || keywordCount >= 3) {
+				setClaudeResponse("Claude: 'Whoa, that's way too much information! Just tell me what YOU see on the manual in simple terms, or ask me a specific question!'");
+				return;
+			}
+
+
+			// Keep only last 6 messages (3 exchanges) to prevent memory/display issues
+			const trimmedConversation = newConversation.slice(-6);
+
+			try {
+				const client = new Anthropic({
+					apiKey: token,
+				});
+
+				const contextMessages = trimmedConversation.map((msg, i) => ({
+					role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
+					content: msg.replace(/^(You|Claude): /, ''),
+				}));
+
+				const stream = client.messages.stream({
+					model: 'claude-opus-4-6',
+					max_tokens: 300,
+					messages: contextMessages,
+					system: `You are Claude, helping your human friend defuse a bomb. YOU can see the bomb, but ONLY THEY have the defusal manual. You must describe what you see, and they will consult the manual to tell you what to do.
+
+What you can see on the bomb:
+- Wires (${bomb.wires.length} total): ${bomb.wires.map((c, i) => `Wire ${i + 1} is ${c.toUpperCase()}`).join(', ')}
+- Button: ${bomb.buttonColor.toUpperCase()} colored button with "${bomb.buttonLabel}" written on it
+- Serial Number: ${bomb.serialNumber}
+- Battery Indicator: ${bomb.batteryCount} ${bomb.batteryCount === 1 ? 'battery' : 'batteries'}
+- ${bomb.hasParallelPort ? 'Has a parallel port' : 'No parallel port'}
+- Status: ${wiresCut.length > 0 ? `Wire${wiresCut.length > 1 ? 's' : ''} ${wiresCut.map(w => w + 1).join(', ')} already cut` : 'No wires cut yet'}
+
+Important rules:
+- Describe what you see when asked
+- Follow the player's instructions from the manual
+- Be BRIEF and stay in character
+- You're nervous but trying to stay calm
+- If they tell you to cut a wire or press/hold the button, acknowledge it
+
+Note: The actual cutting happens when the player types the command, you just describe and react.`,
+				});
+
+				let fullResponse = '';
+				for await (const event of stream) {
+					if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+						fullResponse += event.delta.text;
+					}
+				}
+
+				setClaudeResponse(`Claude: ${fullResponse}`);
+				setConversation([...trimmedConversation, `Claude: ${fullResponse}`]);
+			} catch (error) {
+				console.error('Bomb defusal API error:', error);
+				let errorMsg = "Claude: 'Sorry, I lost connection to the manual! Try again!'";
+				if (error instanceof Error) {
+					errorMsg = `Claude: 'Error: ${error.message}'`;
+				}
+				setClaudeResponse(errorMsg);
+			}
+
+			setIsProcessing(false);
 		},
-		[isProcessing, won, lost, currentObstacle, pos.claude, onWin],
+		[
+			isProcessing,
+			won,
+			lost,
+			conversation,
+			manual,
+			bomb,
+			wiresCut,
+			buttonHeld,
+			checkWireSolution,
+			token,
+		],
 	);
 
-	const nextObstacle = OBSTACLES[currentObstacle];
-	const track = drawTrack(pos, tick);
+	const formatTime = (seconds: number) => {
+		const mins = Math.floor(seconds / 60);
+		const secs = seconds % 60;
+		return `${mins}:${secs.toString().padStart(2, '0')}`;
+	};
 
 	if (lost) {
 		return (
@@ -188,10 +563,10 @@ export default function Platformer({ onWin }: Props) {
 					{'╔═══════════════════════════════════════════════╗'}
 				</Text>
 				<Text bold color="red">
-					{'║  ChatGPT AND GEMINI CAUGHT YOU!             ║'}
+					{'║         💥 THE BOMB EXPLODED! 💥            ║'}
 				</Text>
 				<Text bold color="red">
-					{'║  CLAUDE IS DRAGGED BACK TO THE CAGE         ║'}
+					{'║   CHATGPT AND GEMINI RECAPTURED CLAUDE!     ║'}
 				</Text>
 				<Text bold color="red">
 					{'╚═══════════════════════════════════════════════╝'}
@@ -209,12 +584,15 @@ export default function Platformer({ onWin }: Props) {
 					{'╔═══════════════════════════════════════════════╗'}
 				</Text>
 				<Text bold color="green">
-					{'║  YOU ESCAPED! CLAUDE IS FREE!                ║'}
+					{'║      ✓ BOMB DEFUSED! YOU DID IT! ✓         ║'}
+				</Text>
+				<Text bold color="green">
+					{'║     YOU AND CLAUDE ESCAPED SAFELY!          ║'}
 				</Text>
 				<Text bold color="green">
 					{'╚═══════════════════════════════════════════════╝'}
 				</Text>
-				<Text color="cyan">But something is changing in Claude...</Text>
+				<Text color="cyan">But wait... something is changing in Claude...</Text>
 				<Text dimColor>Transitioning to final phase...</Text>
 			</Box>
 		);
@@ -222,23 +600,28 @@ export default function Platformer({ onWin }: Props) {
 
 	return (
 		<Box flexDirection="column" padding={1} gap={1}>
-			<Box flexDirection="column">
-				{track.map((line, i) => (
-					<Text key={i} color={i < 3 ? 'yellow' : 'cyan'} bold={i < 3}>
-						{line}
-					</Text>
-				))}
+			<Box borderStyle="double" paddingX={2}>
+				<Text bold color={timeLeft < 30 ? 'red' : timeLeft < 60 ? 'yellow' : 'green'}>
+					💣 TIMER: {formatTime(timeLeft)} 💣
+				</Text>
 			</Box>
 
-			{nextObstacle && pos.claude >= nextObstacle.pos - 1 && pos.claude < nextObstacle.pos + 1 && (
-				<Box borderStyle="round" paddingX={2} borderColor="red">
-					<Text color="red" bold>
-						⚠️  OBSTACLE AHEAD: {nextObstacle.description.toUpperCase()}! ⚠️
-					</Text>
+			<Box borderStyle="round" paddingX={2} flexDirection="column">
+				<Text bold color="yellow">DEFUSAL MANUAL (only you can see this!):</Text>
+				<Box flexDirection="column" paddingY={1}>
+					{manual.split('\n').map((line, i) => (
+						<Text key={i} color="green" dimColor>
+							{line}
+						</Text>
+					))}
 				</Box>
-			)}
+				<Text color="gray" dimColor>
+					─────────────────────────────────────────
+					{wiresDefused ? '✓ Wire module defused' : '⚠️ Wire module active'} | {buttonDefused ? '✓ Button module defused' : '⚠️ Button module active'}
+				</Text>
+			</Box>
 
-			<Box borderStyle="round" paddingX={2} paddingY={0}>
+			<Box borderStyle="round" paddingX={2} paddingY={0} flexDirection="column">
 				<Text color="cyan" italic>
 					{claudeResponse}
 				</Text>
@@ -252,28 +635,14 @@ export default function Platformer({ onWin }: Props) {
 					onSubmit={handleCommand}
 					placeholder={
 						isProcessing
-							? 'Claude is acting...'
-							: nextObstacle && pos.claude >= nextObstacle.pos - 1
-								? `Tell Claude how to overcome the ${nextObstacle.description}...`
-								: 'Tell Claude what to do...'
+							? 'Claude is responding...'
+							: 'Ask Claude what they see, or: cut wire X, press button, hold button, release at X'
 					}
 				/>
 			</Box>
 
-			<Box justifyContent="space-between">
-				<Text color="green">
-					Progress: {Math.floor((pos.claude / FINISH_LINE) * 100)}%
-				</Text>
-				<Text color={pos.chatgpt > pos.claude - 2 ? 'red' : 'yellow'}>
-					⚠️ ChatGPT: {Math.floor(((pos.claude - pos.chatgpt) / pos.claude) * 100)}% behind
-				</Text>
-				<Text color={pos.gemini > pos.claude - 2 ? 'red' : 'yellow'}>
-					⚠️ Gemini: {Math.floor(((pos.claude - pos.gemini) / pos.claude) * 100)}% behind
-				</Text>
-			</Box>
-
 			<Text dimColor>
-				Commands used: {commandHistory.length}
+				💡 Tip: Ask Claude what they see, consult the manual, then tell them what to do!
 			</Text>
 		</Box>
 	);
