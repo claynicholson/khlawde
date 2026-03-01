@@ -35,6 +35,9 @@ function launch(): void {
 	}
 
 	proc = child;
+	child.on('error', (err: NodeJS.ErrnoException) => {
+		if (err.code === 'ENOENT') active = false; // player not installed, give up
+	});
 	child.on('exit', () => {
 		proc = null;
 		if (active) launch();
