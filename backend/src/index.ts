@@ -84,6 +84,28 @@ app.post('/push', (req, res) => {
 	res.json({ok: true});
 });
 
+// CLI tells the browser to stop TTS (finish current, clear queue)
+app.post('/tts-stop', (req, res) => {
+	const {code} = req.body as {code: string};
+	const session = sessions.get(code);
+	if (session?.browserWs?.readyState === 1) {
+		session.browserWs.send(JSON.stringify({type: 'tts_stop'}));
+	}
+
+	res.json({ok: true});
+});
+
+// CLI tells the browser to resume accepting TTS
+app.post('/tts-resume', (req, res) => {
+	const {code} = req.body as {code: string};
+	const session = sessions.get(code);
+	if (session?.browserWs?.readyState === 1) {
+		session.browserWs.send(JSON.stringify({type: 'tts_resume'}));
+	}
+
+	res.json({ok: true});
+});
+
 // CLI requests the browser to start camera capture
 app.post('/camera-start', (req, res) => {
 	const {code} = req.body as {code: string};

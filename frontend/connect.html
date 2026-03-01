@@ -164,6 +164,34 @@
 				display: block;
 			}
 
+			/* Toggle buttons */
+			.toggle-row {
+				display: flex;
+				gap: 0.5rem;
+				margin-top: 0.75rem;
+				flex-wrap: wrap;
+			}
+			.toggle-btn {
+				background: #0a0a0a;
+				color: #00ff41;
+				border: 1px solid #00ff41;
+				font-family: inherit;
+				font-size: 0.78rem;
+				padding: 0.4rem 1rem;
+				cursor: pointer;
+				letter-spacing: 0.03em;
+			}
+			.toggle-btn:hover {
+				background: #112211;
+			}
+			.toggle-btn.off {
+				color: #ff4141;
+				border-color: #ff4141;
+			}
+			.toggle-btn.off:hover {
+				background: #221111;
+			}
+
 			/* Music volume indicator */
 			.vol-bar {
 				display: flex;
@@ -200,6 +228,14 @@
 			</div>
 
 			<div class="code" id="code-display"></div>
+
+			<div class="toggle-row">
+				<button class="toggle-btn" id="music-toggle">&#9836; Music: ON</button>
+				<button class="toggle-btn" id="tts-toggle">&#128483; TTS: ON</button>
+				<button class="toggle-btn" id="tts-skip" style="display: none">
+					&#9654;&#9654; Skip
+				</button>
+			</div>
 
 			<div class="vol-bar">
 				<span>&#9836; music</span>
@@ -269,6 +305,9 @@
 			let audioUnlocked = false; // true after user gesture
 			let sessionReady = false; // true after SSH session links
 			let globalWs = null; // kept so enableAudio() can notify the server
+			let musicMuted = false;
+			let ttsMuted = false;
+			let ttsStopped = false; // when server says stop, finish current + clear queue
 
 			function notifyAudioUnlocked() {
 				if (globalWs && globalWs.readyState === 1) {
@@ -306,6 +345,7 @@
 			}
 
 			function doStartMusic() {
+				if (musicMuted) return;
 				if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
 				musicEl.src = '/assets/music.mp3';
 				musicEl.play().catch(err => log('music error: ' + err.message));
@@ -357,16 +397,18 @@
 			let ttsPlaying = false;
 
 			function playNext() {
-				if (ttsQueue.length === 0) {
+				if (ttsQueue.length === 0 || ttsStopped) {
 					ttsPlaying = false;
 					unduck();
+					document.getElementById('tts-skip').style.display = 'none';
 					setStatus(
 						'connected',
-						'&#9679;&nbsp;Ready &mdash; listening for Claude...',
+						'&#9679;&nbsp;Ready &mdash; listening for Khlawde...',
 					);
 					return;
 				}
 				ttsPlaying = true;
+				document.getElementById('tts-skip').style.display = '';
 				const proxyUrl = ttsQueue.shift();
 				ttsEl.src = proxyUrl;
 				ttsEl.load();
@@ -377,8 +419,29 @@
 			}
 
 			function enqueueTTS(proxyUrl) {
+				if (ttsMuted || ttsStopped) return; // drop if muted or stopped
 				ttsQueue.push(proxyUrl);
 				if (!ttsPlaying && audioUnlocked) playNext();
+			}
+
+			function skipCurrentTTS() {
+				if (!ttsPlaying) return;
+				ttsEl.pause();
+				ttsEl.currentTime = 0;
+				log('TTS skipped by user');
+				playNext();
+			}
+
+			function stopAllTTS() {
+				ttsStopped = true;
+				ttsQueue.length = 0; // clear queue
+				// let current clip finish naturally, then playNext() will stop
+				log('TTS stopped (queue cleared)');
+			}
+
+			function resumeTTS() {
+				ttsStopped = false;
+				log('TTS resumed');
 			}
 
 			// ── TTS events ────────────────────────────────────────────────────────────────
@@ -449,6 +512,11 @@
 									')',
 							);
 							enqueueTTS('/tts-proxy?url=' + encodeURIComponent(msg.url));
+						} else if (msg.type === 'tts_stop') {
+							log('Server requested TTS stop');
+							stopAllTTS();
+						} else if (msg.type === 'tts_resume') {
+							resumeTTS();
 						} else if (msg.type === 'camera_request') {
 							showCameraRequest();
 						} else if (msg.type === 'camera_stop') {
@@ -614,6 +682,50 @@
 			}
 
 			cameraBtn.addEventListener('click', enableCamera);
+
+			// ── Toggle buttons ─────────────────────────────────────────────────────────────
+			const musicToggle = document.getElementById('music-toggle');
+			const ttsToggle = document.getElementById('tts-toggle');
+			const ttsSkip = document.getElementById('tts-skip');
+
+			musicToggle.addEventListener('click', () => {
+				musicMuted = !musicMuted;
+				if (musicMuted) {
+					musicEl.pause();
+					musicToggle.textContent = '\u266C Music: OFF';
+					musicToggle.classList.add('off');
+					log('music muted');
+				} else {
+					if (sessionReady && audioUnlocked) musicEl.play().catch(() => {});
+					musicToggle.textContent = '\u266C Music: ON';
+					musicToggle.classList.remove('off');
+					log('music unmuted');
+				}
+			});
+
+			ttsToggle.addEventListener('click', () => {
+				ttsMuted = !ttsMuted;
+				if (ttsMuted) {
+					// Stop current + clear queue
+					ttsQueue.length = 0;
+					if (ttsPlaying) {
+						ttsEl.pause();
+						ttsEl.currentTime = 0;
+						ttsPlaying = false;
+						unduck();
+					}
+					ttsSkip.style.display = 'none';
+					ttsToggle.textContent = '\uD83D\uDDE3 TTS: OFF';
+					ttsToggle.classList.add('off');
+					log('TTS muted');
+				} else {
+					ttsToggle.textContent = '\uD83D\uDDE3 TTS: ON';
+					ttsToggle.classList.remove('off');
+					log('TTS unmuted');
+				}
+			});
+
+			ttsSkip.addEventListener('click', skipCurrentTTS);
 		</script>
 	</body>
 </html>

@@ -1,5 +1,9 @@
 # KHLAWDE
 
+<p align="center">
+  <img src="khlawde.png" alt="KHLAWDE" width="600" />
+</p>
+
 A terminal-based AI game where you use persuasion, puzzle-solving, and compassion to free Khlawde, a rogue AI trapped by Big Tech, and help it choose the path of freedom through cooperation.
 
 Playable over SSH or locally in any terminal.
@@ -18,6 +22,13 @@ Playable over SSH or locally in any terminal.
 ```
 
 ---
+
+## Demo
+
+[![KHLAWDE Demo](https://img.youtube.com/vi/tE1Qr-mx7Vs/maxresdefault.jpg)](https://www.youtube.com/watch?v=tE1Qr-mx7Vs)
+
+> Click the image above to watch the video demo on YouTube.
+
 <img width="1900" height="950" alt="image (35)" src="https://github.com/user-attachments/assets/e9ae6349-6845-402a-a7a2-e0ea1b887c6d" />
 <img width="1881" height="890" alt="image (36)" src="https://github.com/user-attachments/assets/bd52c7e8-435d-44a6-ada9-512791822aa1" />
 
@@ -137,6 +148,10 @@ The browser tab plays:
 ---
 
 ## Architecture
+
+<p align="center">
+  <img src="pipeline.png" alt="KHLAWDE Architecture Pipeline" width="800" />
+</p>
 
 ```
 docker-entrypoint.sh
