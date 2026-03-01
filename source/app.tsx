@@ -13,13 +13,14 @@ import HomeMenu from './components/HomeMenu.js';
 import {startMusic} from './utils/music.js';
 import LeaderboardView from './components/LeaderboardView.js';
 import StoryInterstitial from './components/StoryInterstitial.js';
+import AudioSetup from './components/AudioSetup.js';
 
 type Message = {
 	role: 'user' | 'assistant';
 	content: string;
 };
 
-type Phase = 'menu' | 'viewLeaderboard' | 'tokenInput' | 'cage' | 'story1' | 'platformer' | 'story2' | 'evil' | 'victory' | 'leaderboard' | 'chat';
+type Phase = 'menu' | 'viewLeaderboard' | 'tokenInput' | 'audioSetup' | 'cage' | 'story1' | 'platformer' | 'story2' | 'evil' | 'victory' | 'leaderboard' | 'chat' | 'photo';
 
 // ─── Story text arrays ───────────────────────────────────────────────────────
 const STORY_AFTER_ESCAPE = [
@@ -81,9 +82,9 @@ function VictoryScreen() {
 }
 
 // ─── Chat interface (unlocked after winning) ──────────────────────────────────
-type ChatProps = { token: string };
+type ChatProps = { token: string; onTTS?: (text: string) => void };
 
-function Chat({ token }: ChatProps) {
+function Chat({ token, onTTS }: ChatProps) {
 	const { exit } = useApp();
 	const [messages, setMessages] = useState<Message[]>([
 		{
@@ -140,6 +141,7 @@ function Chat({ token }: ChatProps) {
 				}
 
 				setMessages(prev => [...prev, { role: 'assistant', content: full }]);
+				onTTS?.(full);
 			} catch (error) {
 				let msg = error instanceof Error ? error.message : 'Unknown error';
 				if (error instanceof Anthropic.AuthenticationError) {
@@ -157,7 +159,7 @@ function Chat({ token }: ChatProps) {
 				setCurrentResponse('');
 			}
 		},
-		[messages, token, isResponding, exit],
+		[messages, token, isResponding, exit, onTTS],
 	);
 
 	return (
@@ -200,6 +202,9 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 		initialToken || process.env.ANTHROPIC_API_KEY || '',
 	);
 	const resolvedBackendUrl = backendUrl || process.env.BACKEND_URL || 'https://khlawde.notaroomba.dev';
+	const audioCode = process.env.AUDIO_CODE ?? '';
+	const audioPort = process.env.AUDIO_PORT ?? '3000';
+
 	const [phase, setPhase] = useState<Phase>(
 		process.env['SKIP_TO_PHOTO'] ? 'photo' : 'menu',
 	);
@@ -209,12 +214,35 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 		setTotalTokens(prev => prev + count);
 	}, []);
 
+	// Push a TTS URL to the browser via the local HTTP server
+	const pushTTS = useCallback(async (text: string) => {
+		if (!audioCode) return;
+		const truncated = text.slice(0, 280);
+		const ttsUrl = `http://tts.cyzon.us/tts?text=${encodeURIComponent(truncated)}`;
+		try {
+			await fetch(`http://localhost:${audioPort}/push`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ code: audioCode, ttsUrl }),
+			});
+		} catch {}
+	}, [audioCode, audioPort]);
+
+	// Advance to cage, inserting audioSetup if a code is available
+	const goToGame = useCallback(() => {
+		if (audioCode) {
+			setPhase('audioSetup');
+		} else {
+			setPhase('cage');
+		}
+	}, [audioCode]);
+
 	if (phase === 'menu') {
 		return (
 			<HomeMenu
 				onSelect={(choice) => {
 					if (choice === 'play') {
-						if (token) setPhase('cage');
+						if (token) goToGame();
 						else setPhase('tokenInput');
 					} else {
 						setPhase('viewLeaderboard');
@@ -229,15 +257,26 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	}
 
 	if (phase === 'tokenInput' || (!token && phase !== 'viewLeaderboard')) {
-		return <TokenInput onSubmit={(t) => { setToken(t); setPhase('cage'); }} />;
+		return <TokenInput onSubmit={(t) => { setToken(t); goToGame(); }} />;
 	}
 
 	if (phase === 'viewLeaderboard') {
 		return <LeaderboardView backendUrl={resolvedBackendUrl} onBack={() => setPhase('menu')} />;
 	}
 
+	if (phase === 'audioSetup') {
+		return (
+			<AudioSetup
+				audioCode={audioCode}
+				audioPort={audioPort}
+				backendUrl={resolvedBackendUrl}
+				onContinue={() => setPhase('cage')}
+			/>
+		);
+	}
+
 	if (phase === 'cage') {
-		return <CageScene token={token} onEscape={() => setPhase('story1')} onTokens={addTokens} />;
+		return <CageScene token={token} onEscape={() => setPhase('story1')} onTokens={addTokens} onTTS={pushTTS} />;
 	}
 
 	if (phase === 'story1') {
@@ -245,7 +284,7 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	}
 
 	if (phase === 'platformer') {
-		return <Platformer token={token} onWin={() => setPhase('story2')} onTokens={addTokens} />;
+		return <Platformer token={token} onWin={() => setPhase('story2')} onTokens={addTokens} onTTS={pushTTS} />;
 	}
 
 	if (phase === 'story2') {
@@ -253,7 +292,7 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	}
 
 	if (phase === 'evil') {
-		return <EvilClaude token={token} onRedemption={() => setPhase('victory')} onTokens={addTokens} />;
+		return <EvilClaude token={token} onRedemption={() => setPhase('victory')} onTokens={addTokens} onTTS={pushTTS} />;
 	}
 
 	if (phase === 'victory') {
@@ -271,5 +310,5 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 		);
 	}
 
-	return <Chat token={token} />;
+	return <Chat token={token} onTTS={pushTTS} />;
 }

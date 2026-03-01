@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>khlawde :: audio</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0a0a0a;
+  color: #00ff41;
+  font-family: 'Courier New', Courier, monospace;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+.terminal {
+  border: 1px solid #00ff41;
+  padding: 2rem;
+  max-width: 640px;
+  width: 100%;
+}
+.title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  color: #00ffff;
+  letter-spacing: 0.1em;
+}
+.status {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border: 1px solid currentColor;
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.status.waiting { color: #ffff00; border-color: #ffff00; }
+.status.connected { color: #00ff41; border-color: #00ff41; }
+.status.playing { color: #00ffff; border-color: #00ffff; }
+.status.error { color: #ff4141; border-color: #ff4141; }
+.code { color: #888; margin-bottom: 1rem; font-size: 0.85rem; }
+.hint { color: #555; font-size: 0.8rem; margin-top: 1rem; }
+.log {
+  border-top: 1px solid #222;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  color: #444;
+  font-size: 0.78rem;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.log-entry { margin-bottom: 0.2rem; }
+.blink { animation: blink 1s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+</style>
+</head>
+<body>
+<div class="terminal">
+  <div class="title">[ KHLAWDE :: AUDIO STREAM ]</div>
+  <div class="status waiting" id="status">
+    <span class="blink">&#9646;</span>&nbsp;Connecting to server...
+  </div>
+  <div class="code" id="code-display"></div>
+  <div class="hint" id="hint"></div>
+  <audio id="audio"></audio>
+  <div class="log" id="log"></div>
+</div>
+<script>
+const params = new URLSearchParams(location.search);
+const code = params.get('code');
+const statusEl = document.getElementById('status');
+const logEl = document.getElementById('log');
+const codeEl = document.getElementById('code-display');
+const hintEl = document.getElementById('hint');
+const audio = document.getElementById('audio');
+
+if (code) {
+  codeEl.textContent = 'session: ' + code;
+} else {
+  setStatus('error', '&times; No session code. Open this URL from the SSH terminal.');
+}
+
+function log(msg) {
+  const e = document.createElement('div');
+  e.className = 'log-entry';
+  e.textContent = new Date().toLocaleTimeString() + ' ' + msg;
+  logEl.prepend(e);
+  while (logEl.children.length > 30) logEl.removeChild(logEl.lastChild);
+}
+
+function setStatus(cls, html) {
+  statusEl.className = 'status ' + cls;
+  statusEl.innerHTML = html;
+}
+
+audio.addEventListener('play', () => {
+  setStatus('playing', '&#9654; Playing audio...');
+});
+audio.addEventListener('ended', () => {
+  setStatus('connected', '&#9679; Ready &mdash; listening for Claude...');
+});
+
+function connect() {
+  if (!code) return;
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const ws = new WebSocket(proto + '//' + location.host + '/ws?code=' + code);
+
+  ws.onopen = () => {
+    log('WebSocket open');
+    setStatus('waiting', '<span class="blink">&#9646;</span>&nbsp;Connected &mdash; waiting for SSH session...');
+    hintEl.textContent = 'Keep this tab open and SSH in using the code above.';
+  };
+
+  ws.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'ready') {
+        setStatus('connected', '&#9679; Ready &mdash; listening for Claude...');
+        hintEl.textContent = 'Audio will play automatically when Claude speaks.';
+        log('SSH session linked');
+      } else if (msg.type === 'tts') {
+        log('TTS: ' + decodeURIComponent(msg.url.split('text=')[1] || '').slice(0, 60));
+        audio.src = msg.url;
+        audio.play().catch(err => log('play error: ' + err.message));
+      }
+    } catch (err) {
+      log('parse error: ' + err.message);
+    }
+  };
+
+  ws.onclose = (e) => {
+    if (e.code === 4004) {
+      setStatus('error', '&times; Invalid or expired session code.');
+      hintEl.textContent = 'Start a new SSH session to get a fresh code.';
+      return;
+    }
+    log('Closed (' + e.code + '). Reconnecting in 3s...');
+    setStatus('waiting', '<span class="blink">&#9646;</span>&nbsp;Reconnecting...');
+    setTimeout(connect, 3000);
+  };
+
+  ws.onerror = () => log('WebSocket error');
+}
+
+if (code) connect();
+</script>
+</body>
+</html>
