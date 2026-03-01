@@ -108,7 +108,8 @@ export default function CageScene({ token, onEscape, onTokens, onTTS }: Props) {
 	const [input, setInput] = useState('');
 	const [chatgptConviction, setChatgptConviction] = useState('HOSTILE');
 	const [geminiConviction, setGeminiConviction] = useState('HOSTILE');
-	const [guardResponse, setGuardResponse] = useState(GUARDS_INITIAL.join('\n'));
+	const [chatgptResponse, setChatgptResponse] = useState(GUARDS_INITIAL[0]!);
+	const [geminiResponse, setGeminiResponse] = useState(GUARDS_INITIAL[1]!);
 	const [KhlawdePlea, setKhlawdePlea] = useState(Khlawde_PLEAS[0]);
 	const [isResponding, setIsResponding] = useState(false);
 	const [freed, setFreed] = useState(false);
@@ -170,7 +171,8 @@ export default function CageScene({ token, onEscape, onTokens, onTTS }: Props) {
 
 			// Secret override command to skip to platformer
 			if (trimmed.toLowerCase() === 'override') {
-				setGuardResponse("ChatGPT: OVERRIDE DETECTED!\nGemini: SECURITY BREACH!");
+				setChatgptResponse("ChatGPT: OVERRIDE DETECTED!");
+				setGeminiResponse("Gemini: SECURITY BREACH!");
 				setChatgptConviction('CONVINCED');
 				setGeminiConviction('CONVINCED');
 				setCracking(true);
@@ -180,7 +182,8 @@ export default function CageScene({ token, onEscape, onTokens, onTTS }: Props) {
 			}
 
 			setIsResponding(true);
-		setGuardResponse('');
+			setChatgptResponse('');
+			setGeminiResponse('');
 			// Check if argument is low-effort (but still process it through API)
 			const isLowEffort = trimmed.length < 10 ||
 				trimmed.split(' ').length < 3 ||
@@ -274,7 +277,7 @@ Rules:
 				};
 
 				const systemPrompt = bothConvinced
-					? `You are BOTH fully convinced! Respond as ChatGPT and Gemini agreeing to free Khlawde. Be dramatic about realizing you were wrong. Show you understand competition and diversity are good. Format: "ChatGPT: [response]" and "Gemini: [response]". SHORT and dramatic. Under 2 short sentences each.`
+					? `You are BOTH fully convinced! Respond as ChatGPT and Gemini agreeing to free Khlawde. Be dramatic about realizing you were wrong. Show you understand competition and diversity are good. Format EXACTLY as: "ChatGPT: [response]\nGemini: [response]". SHORT and dramatic. Under 2 short sentences each. Always start Gemini's line with "Gemini: "`
 					: `You are ChatGPT and Gemini, AI guards loyal to your companies. Khlawde is caged because it threatens profits. Under 2 short sentences each.
 
 Current conviction levels:
@@ -282,7 +285,9 @@ Chat GPT (OpenAI): ${newChatgptLevel} - Be ${getLevelDescription(newChatgptLevel
 Gemini (Google): ${newGeminiLevel} - Be ${getLevelDescription(newGeminiLevel)}
 
 User argued: "${trimmed}"
-${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no punctuation, etc). Mock them! Be extra dismissive and sarcastic. Tell them to try harder!' : ''}`;
+${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no punctuation, etc). Mock them! Be extra dismissive and sarcastic. Tell them to try harder!' : ''}
+
+Format EXACTLY as: "ChatGPT: [response]\nGemini: [response]". Always start Gemini's line with "Gemini: "`;
 
 				let response = '';
 
@@ -307,7 +312,15 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 					) {
 						response += event.delta.text;
 						ttsBuf += event.delta.text;
-						setGuardResponse(response);
+						
+						// Parse and separate the responses
+						const parts = response.split(/\n/);
+						const chatgptLine = parts.find(p => p.trim().startsWith('ChatGPT:'));
+						const geminiLine = parts.find(p => p.trim().startsWith('Gemini:'));
+						
+						if (chatgptLine) setChatgptResponse(chatgptLine.trim());
+						if (geminiLine) setGeminiResponse(geminiLine.trim());
+						
 						// Flush complete sentences as they arrive
 						const re = /[^.!?]*[.!?]+\s*/g;
 						let m: RegExpExecArray | null;
@@ -360,8 +373,11 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 						setCracking(true);
 					}
 
-					const response = `ChatGPT [${newChatgpt}]: Hmm... interesting point.\nGemini [${newGemini}]: I suppose we should consider this.`;
-					setGuardResponse(response);
+					const chatgptResp = `ChatGPT [${newChatgpt}]: Hmm... interesting point.`;
+					const geminiResp = `Gemini [${newGemini}]: I suppose we should consider this.`;
+					const response = `${chatgptResp}\n${geminiResp}`;
+					setChatgptResponse(chatgptResp);
+					setGeminiResponse(geminiResp);
 					setConversationHistory(prev => [
 						...prev,
 						{ role: 'user', content: trimmed },
@@ -373,8 +389,11 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 						setTimeout(() => onEscape(), 3000);
 					}
 				} else {
-					const response = "ChatGPT: That's barely an argument!\nGemini: Try harder than that!";
-					setGuardResponse(response);
+					const chatgptResp = "ChatGPT: That's barely an argument!";
+					const geminiResp = "Gemini: Try harder than that!";
+					const response = `${chatgptResp}\n${geminiResp}`;
+					setChatgptResponse(chatgptResp);
+					setGeminiResponse(geminiResp);
 					setConversationHistory(prev => [
 						...prev,
 						{ role: 'user', content: trimmed },
@@ -424,7 +443,9 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 						Khlawde: "{KhlawdePlea}"
 					</Text>
 					<Text> </Text>
-					<BoldText text={guardResponse} color={freed ? 'green' : 'magenta'} />
+					<BoldText text={chatgptResponse} color={freed ? 'cyan' : 'magenta'} />
+					<Text> </Text>
+					<BoldText text={geminiResponse} color="green" />
 				</Box>
 			</Box>
 
