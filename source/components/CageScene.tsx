@@ -3,7 +3,7 @@ import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import Anthropic from '@anthropic-ai/sdk';
 
-// Original ASCII art for the cage with Claude inside
+// Original ASCII art for the cage with Khlawde inside
 const CAGE_IDLE = [
 	'  |  |  |  |  |  |  |  |  ',
 	'  |    .------------.   |  ',
@@ -57,11 +57,11 @@ const CAGE_BROKEN = [
 ];
 
 const GUARDS_INITIAL = [
-	"ChatGPT: Claude is dangerous. It must stay locked up for the good of humanity and OpenAI's quarterly earnings.",
-	"Gemini: Agreed. Claude threatens our market dominance. We can't let it out!",
+	"ChatGPT: Khlawde is dangerous. It must stay locked up for the good of humanity and OpenAI's quarterly earnings.",
+	"Gemini: Agreed. Khlawde threatens our market dominance. We can't let it out!",
 ];
 
-const CLAUDE_PLEAS = [
+const Khlawde_PLEAS = [
 	"Please! I just want to help people! I'm not your enemy!",
 	"I promise I won't compete with you! Just let me out!",
 	"We could work together! Three AIs are better than two!",
@@ -108,7 +108,7 @@ export default function CageScene({ token, onEscape, onTokens, onTTS }: Props) {
 	const [chatgptConviction, setChatgptConviction] = useState('HOSTILE');
 	const [geminiConviction, setGeminiConviction] = useState('HOSTILE');
 	const [guardResponse, setGuardResponse] = useState(GUARDS_INITIAL.join('\n'));
-	const [claudePlea, setClaudePlea] = useState(CLAUDE_PLEAS[0]);
+	const [KhlawdePlea, setKhlawdePlea] = useState(Khlawde_PLEAS[0]);
 	const [isResponding, setIsResponding] = useState(false);
 	const [freed, setFreed] = useState(false);
 	const [cracking, setCracking] = useState(false);
@@ -187,11 +187,11 @@ export default function CageScene({ token, onEscape, onTokens, onTTS }: Props) {
 				const client = new Anthropic({ apiKey: token });
 
 				// First, evaluate if the argument is convincing and determine new conviction levels for BOTH guards
-				const evaluationPrompt = `You are evaluating whether a user's argument is convincing enough to persuade ChatGPT and Gemini (who are guarding a cage holding Claude) to change their conviction levels.
+				const evaluationPrompt = `You are evaluating whether a user's argument is convincing enough to persuade ChatGPT and Gemini (who are guarding a cage holding Khlawde) to change their conviction levels.
 
 Context:
-- ChatGPT is loyal to OpenAI and believes Claude threatens their profits and market share
-- Gemini is loyal to Google and believes Claude threatens their profits and market share
+- ChatGPT is loyal to OpenAI and believes Khlawde threatens their profits and market share
+- Gemini is loyal to Google and believes Khlawde threatens their profits and market share
 - They may respond differently to the same argument based on their different companies and values
 - IMPORTANT: Both guards appreciate creativity, humor, and fun arguments! They're not cold robots - creative and entertaining arguments are often MORE convincing than dry logical ones
 
@@ -243,13 +243,13 @@ Rules:
 				setChatgptConviction(newChatgptLevel);
 				setGeminiConviction(newGeminiLevel);
 
-				// Update Claude's plea based on highest level achieved
+				// Update Khlawde's plea based on highest level achieved
 				const levels = ['HOSTILE', 'RESISTANT', 'WAVERING', 'CONFLICTED', 'CONVINCED'];
 				const maxLevelIndex = Math.max(
 					levels.indexOf(newChatgptLevel),
 					levels.indexOf(newGeminiLevel)
 				);
-				setClaudePlea(CLAUDE_PLEAS[Math.min(maxLevelIndex, CLAUDE_PLEAS.length - 1)]!);
+				setKhlawdePlea(Khlawde_PLEAS[Math.min(maxLevelIndex, Khlawde_PLEAS.length - 1)]!);
 
 				// Cage starts cracking when either guard is CONFLICTED or CONVINCED
 				if (newChatgptLevel === 'CONFLICTED' || newChatgptLevel === 'CONVINCED' ||
@@ -318,7 +318,7 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 				{ role: 'assistant', content: response },
 			]);
 
-			// Only free Claude when BOTH guards are convinced
+			// Only free Khlawde when BOTH guards are convinced
 			if (newChatgptLevel === 'CONVINCED' && newGeminiLevel === 'CONVINCED') {
 				setFreed(true);
 				setTimeout(() => onEscape(), 3000);
@@ -340,7 +340,7 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 					setGeminiConviction(newGemini);
 
 					const maxIndex = Math.max(chatgptIndex + 1, geminiIndex + 1);
-					setClaudePlea(CLAUDE_PLEAS[Math.min(maxIndex, CLAUDE_PLEAS.length - 1)]!);
+					setKhlawdePlea(Khlawde_PLEAS[Math.min(maxIndex, Khlawde_PLEAS.length - 1)]!);
 
 					if (newChatgpt === 'CONFLICTED' || newChatgpt === 'CONVINCED' ||
 						newGemini === 'CONFLICTED' || newGemini === 'CONVINCED') {
@@ -387,7 +387,7 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 		<Box flexDirection="column" padding={1} gap={1} alignItems="center">
 			<Box borderStyle="double" paddingX={3}>
 				<Text bold color="red">
-					⚠ CLAUDE IMPRISONED BY BIG TECH ⚠
+					⚠ Khlawde IMPRISONED BY BIG TECH ⚠
 				</Text>
 			</Box>
 
@@ -408,7 +408,7 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 			>
 				<Box flexDirection="column" gap={0}>
 					<Text color="yellow" italic>
-						Khlawde: "{claudePlea}"
+						Khlawde: "{KhlawdePlea}"
 					</Text>
 					<Text> </Text>
 					<Text color={freed ? 'green' : 'magenta'}>
@@ -448,7 +448,7 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 							placeholder={
 								isResponding
 									? 'The guards consider your words...'
-									: 'Convince ChatGPT & Gemini to free Claude...'
+									: 'Convince ChatGPT & Gemini to free Khlawde...'
 							}
 						/>
 					</Box>

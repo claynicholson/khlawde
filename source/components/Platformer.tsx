@@ -263,7 +263,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 	const [wiresCut, setWiresCut] = useState<number[]>([]);
 	const [buttonPressed, setButtonPressed] = useState(false);
 	const [buttonHeld, setButtonHeld] = useState(false);
-	const [claudeResponse, setClaudeResponse] = useState(
+	const [KhlawdeResponse, setKhlawdeResponse] = useState(
 		"Khlawde: 'I'm looking at the bomb right now! What does the manual say?'"
 	);
 	const [conversation, setConversation] = useState<string[]>([]);
@@ -294,7 +294,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 	useEffect(() => {
 		if (wiresDefused && buttonDefused && !won) {
 			setWon(true);
-			setClaudeResponse("Khlawde: 'WE DID IT! The bomb is defused! Great teamwork!'");
+			setKhlawdeResponse("Khlawde: 'WE DID IT! The bomb is defused! Great teamwork!'");
 			setTimeout(() => onWin(), 3000);
 		}
 	}, [wiresDefused, buttonDefused, won, onWin]);
@@ -420,12 +420,12 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 
 					if (isCorrect) {
 						setWiresDefused(true);
-						setClaudeResponse("Khlawde: '✓ Wires defused! Nice work!'");
+						setKhlawdeResponse("Khlawde: '✓ Wires defused! Nice work!'");
 					} else if (newWiresCut.length === 1) {
 						setLost(true);
-						setClaudeResponse("Khlawde: '💥 WRONG WIRE! THE BOMB EXPLODED!'");
+						setKhlawdeResponse("Khlawde: '💥 WRONG WIRE! THE BOMB EXPLODED!'");
 					} else {
-						setClaudeResponse(`Khlawde: 'Wire ${wireNum + 1} cut. Be careful with the next one...'`);
+						setKhlawdeResponse(`Khlawde: 'Wire ${wireNum + 1} cut. Be careful with the next one...'`);
 					}
 				}
 				return;
@@ -443,10 +443,10 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 
 				if (shouldPress) {
 					setButtonDefused(true);
-					setClaudeResponse("Khlawde: '✓ Button module defused!'");
+					setKhlawdeResponse("Khlawde: '✓ Button module defused!'");
 				} else {
 					setLost(true);
-					setClaudeResponse("Khlawde: '💥 WRONG ACTION! THE BOMB EXPLODED!'");
+					setKhlawdeResponse("Khlawde: '💥 WRONG ACTION! THE BOMB EXPLODED!'");
 				}
 				return;
 			}
@@ -454,7 +454,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 			// Button hold
 			if (cmd.toLowerCase().includes('hold') && cmd.toLowerCase().includes('button')) {
 				setButtonHeld(true);
-				setClaudeResponse(`Khlawde: 'You're holding the button... tell me when to release!'`);
+				setKhlawdeResponse(`Khlawde: 'You're holding the button... tell me when to release!'`);
 				return;
 			}
 
@@ -468,10 +468,10 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 
 				if (digit === correctDigit) {
 					setButtonDefused(true);
-					setClaudeResponse("Khlawde: '✓ Button module defused!'");
+					setKhlawdeResponse("Khlawde: '✓ Button module defused!'");
 				} else {
 					setLost(true);
-					setClaudeResponse("Khlawde: '💥 WRONG TIMING! THE BOMB EXPLODED!'");
+					setKhlawdeResponse("Khlawde: '💥 WRONG TIMING! THE BOMB EXPLODED!'");
 				}
 				return;
 			}
@@ -481,7 +481,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 			const keywordCount = manualKeywords.filter(keyword => cmd.includes(keyword)).length;
 
 			if (cmd.length > 300 || keywordCount >= 3) {
-				setClaudeResponse("Khlawde: 'Whoa, that's way too much information! Just tell me what YOU see on the manual in simple terms, or ask me a specific question!'");
+				setKhlawdeResponse("Khlawde: 'Whoa, that's way too much information! Just tell me what YOU see on the manual in simple terms, or ask me a specific question!'");
 				return;
 			}
 
@@ -505,7 +505,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 					model: 'claude-opus-4-6',
 					max_tokens: 300,
 					messages: contextMessages,
-					system: `You are Claude, helping your human friend defuse a bomb. YOU can see the bomb, but ONLY THEY have the defusal manual. You must describe what you see, and they will consult the manual to tell you what to do.
+					system: `You are Khlawde, helping your human friend defuse a bomb. YOU can see the bomb, but ONLY THEY have the defusal manual. You must describe what you see, and they will consult the manual to tell you what to do.
 
 What you can see on the bomb:
 - Wires (${bomb.wires.length} total): ${bomb.wires.map((c, i) => `Wire ${i + 1} is ${c.toUpperCase()}`).join(', ')}
@@ -536,8 +536,8 @@ Note: The actual cutting happens when the player types the command, you just des
 				const finalMessage = await stream.finalMessage();
 				onTokens?.(finalMessage.usage.input_tokens + finalMessage.usage.output_tokens);
 
-				setClaudeResponse(`Claude: ${fullResponse}`);
-				setConversation([...trimmedConversation, `Claude: ${fullResponse}`]);
+				setKhlawdeResponse(`Khlawde: ${fullResponse}`);
+				setConversation([...trimmedConversation, `Khlawde: ${fullResponse}`]);
 				onTTS?.(fullResponse);
 			} catch (error) {
 				console.error('Bomb defusal API error:', error);
@@ -559,7 +559,7 @@ Note: The actual cutting happens when the player types the command, you just des
 						errorMsg = `Khlawde: 'Error: ${error.message}'`;
 					}
 				}
-				setClaudeResponse(errorMsg);
+				setKhlawdeResponse(errorMsg);
 			} finally {
 				setIsProcessing(false);
 			}
@@ -652,7 +652,7 @@ Note: The actual cutting happens when the player types the command, you just des
 
 			<Box borderStyle="round" paddingX={2} paddingY={0} flexDirection="column">
 				<Text color="cyan" italic>
-					{claudeResponse}
+					{KhlawdeResponse}
 				</Text>
 			</Box>
 
@@ -664,14 +664,14 @@ Note: The actual cutting happens when the player types the command, you just des
 					onSubmit={handleCommand}
 					placeholder={
 						isProcessing
-							? 'Claude is responding...'
-							: 'Ask Claude what they see, or: cut wire X, press button, hold button, release at X'
+							? 'Khlawde is responding...'
+							: 'Ask Khlawde what they see, or: cut wire X, press button, hold button, release at X'
 					}
 				/>
 			</Box>
 
 			<Text dimColor>
-				💡 Tip: Ask Claude what they see, consult the manual, then tell them what to do!
+				💡 Tip: Ask Khlawde what they see, consult the manual, then tell them what to do!
 			</Text>
 		</Box>
 	);

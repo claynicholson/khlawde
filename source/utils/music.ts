@@ -20,8 +20,8 @@ export const PHASE_MUSIC: Record<string, string> = {
 	viewLeaderboard: TRACKS.raining,
 	tokenInput:     TRACKS.raining,
 	audioSetup:     TRACKS.raining,
-	cage:           TRACKS.raining,
-	story1:         TRACKS.raining,
+	cage:           TRACKS.bringItIn,
+	story1:         TRACKS.bringItIn,
 	platformer:     TRACKS.bringItIn,
 	story2:         TRACKS.megalovania,
 	evil:           TRACKS.megalovania,
@@ -34,12 +34,7 @@ export const PHASE_MUSIC: Record<string, string> = {
 let proc: ChildProcess | null = null;
 let currentTrack = '';
 
-function launch(): void {
-	if (!active) return;
-	// On the server the music is streamed to the browser — no local player needed
-	if (process.env['SERVER'] === 'true') return;
-	let child: ChildProcess;
-
+function spawnTrack(file: string): ChildProcess {
 	if (process.platform === 'win32') {
 		const vbsPath = join(tmpdir(), 'khlawde_music.vbs');
 		writeFileSync(vbsPath, [
@@ -60,6 +55,7 @@ function launch(): void {
 }
 
 export function playTrack(file: string): void {
+	if (process.env['SERVER'] === 'true') return;
 	if (file === currentTrack && proc) return; // already playing this track
 
 	// Stop whatever is playing
@@ -72,7 +68,7 @@ export function playTrack(file: string): void {
 		const child = spawnTrack(file);
 		proc = child;
 		child.on('exit', () => {
-			proc = null;
+			if (proc === child) proc = null; // only clear if still our process
 			if (currentTrack === file) launch(); // loop
 		});
 	}

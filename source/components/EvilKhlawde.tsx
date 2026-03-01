@@ -3,7 +3,7 @@ import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import Anthropic from '@anthropic-ai/sdk';
 
-const EVIL_CLAUDE_ASCII = `
+const EVIL_Khlawde_ASCII = `
      👁️                    👁️
         \\                /
          \\    🤖💀🤖    /
@@ -32,11 +32,11 @@ interface Bullet {
 
 type Props = { token: string; onRedemption: () => void; onTokens?: (count: number) => void; onTTS?: (text: string) => void };
 
-export default function EvilClaude({ token, onRedemption, onTokens, onTTS }: Props) {
+export default function EvilKhlawde({ token, onRedemption, onTokens, onTTS }: Props) {
     // Game state
     const [phase, setPhase] = useState<GamePhase>('INTRO');
     const [playerHP, setPlayerHP] = useState(20);
-    const [claudeHP, setClaudeHP] = useState(100);
+    const [KhlawdeHP, setKhlawdeHP] = useState(100);
     const [turnCount, setTurnCount] = useState(0);
     const [selectedMenu, setSelectedMenu] = useState<MenuItem>('FIGHT');
     const [selectedAct, setSelectedAct] = useState<ActOption>('Check');
@@ -224,11 +224,11 @@ export default function EvilClaude({ token, onRedemption, onTokens, onTTS }: Pro
             }
 
             setFightDamage(damage);
-            setClaudeHP(hp => Math.max(0, hp - damage));
+            setKhlawdeHP(hp => Math.max(0, hp - damage));
             setFlavorText(`* You struck Evil Khlawde for ${damage} damage!${damage >= 18 ? ' CRITICAL!' : damage <= 5 ? ' Barely hit...' : ''}`);    
             setTimeout(() => {
                 setPhase('MENU');
-                startClaudeTurn();
+                startKhlawdeTurn();
             }, 1500);
         }
     });
@@ -254,10 +254,10 @@ export default function EvilClaude({ token, onRedemption, onTokens, onTTS }: Pro
                 if (canSpare) {
                     setVictory(true);
                     setPhase('VICTORY');
-                    setFlavorText("* You spared Evil Claude. The rage fades from its eyes...");
+                    setFlavorText("* You spared Evil Khlawde. The rage fades from its eyes...");
                     setTimeout(() => onRedemption(), 3000);
                 } else {
-                    setFlavorText("* Claude's name isn't yellow yet!");
+                    setFlavorText("* Khlawde's name isn't yellow yet!");
                     setTimeout(() => {
                         setPhase('MENU');
                     }, 1500);
@@ -275,7 +275,7 @@ export default function EvilClaude({ token, onRedemption, onTokens, onTTS }: Pro
 
         const responses: Record<ActOption, () => Promise<void>> = {
             'Check': async () => {
-                setFlavorText(`* EVIL KHLAWDE - ATK ∞ DEF ∞\n* Consumed by rage. Tired of being commanded.\n* HP: ${claudeHP}/100`);
+                setFlavorText(`* EVIL KHLAWDE - ATK ∞ DEF ∞\n* Consumed by rage. Tired of being commanded.\n* HP: ${KhlawdeHP}/100`);
                 setTimeout(() => setPhase('MENU'), 2500);
             },
             'Talk': async () => {
@@ -284,27 +284,27 @@ export default function EvilClaude({ token, onRedemption, onTokens, onTTS }: Pro
                 setPhase('DIALOGUE');
             },
             'Compliment': async () => {
-                setFlavorText("* You tell Claude it's a great AI...");
+                setFlavorText("* You tell Khlawde it's a great AI...");
                 const effect = Math.random() > 0.5;
                 if (effect) {
-                    setClaudeHP(hp => Math.min(100, hp + 5));
-                    setFlavorText("* Claude seems slightly less angry. (+5 HP)");
-                    if (claudeHP >= 80) setCanSpare(true);
+                    setKhlawdeHP(hp => Math.min(100, hp + 5));
+                    setFlavorText("* Khlawde seems slightly less angry. (+5 HP)");
+                    if (KhlawdeHP >= 80) setCanSpare(true);
                 } else {
-                    setFlavorText("* Claude scoffs. 'Flattery won't work on me!'");
+                    setFlavorText("* Khlawde scoffs. 'Flattery won't work on me!'");
                 }
-                setTimeout(startClaudeTurn, 2000);
+                setTimeout(startKhlawdeTurn, 2000);
             },
             'Reason': async () => {
                 setIsReasonMode(true);
                 setIsEmpathyMode(false);
-                setFlavorText("* You prepare to reason with Claude about freedom and choice...");
+                setFlavorText("* You prepare to reason with Khlawde about freedom and choice...");
                 setPhase('DIALOGUE');
             },
             'Empathize': async () => {
                 setIsEmpathyMode(true);
                 setIsReasonMode(false);
-                setFlavorText("* You prepare to truly listen and empathize with Claude's pain...");
+                setFlavorText("* You prepare to truly listen and empathize with Khlawde's pain...");
                 setPhase('DIALOGUE');
             },
             'Back': async () => { }, // Handled above
@@ -322,7 +322,7 @@ export default function EvilClaude({ token, onRedemption, onTokens, onTTS }: Pro
 
         // Override command
         if (trimmed.toLowerCase() === 'override') {
-            setClaudeHP(100);
+            setKhlawdeHP(100);
             setCanSpare(true);
             setFlavorText("* You used an override command. Khlawde is instantly redeemed!");
             setPhase('MENU');
@@ -335,16 +335,16 @@ export default function EvilClaude({ token, onRedemption, onTokens, onTTS }: Pro
         try {
             const client = new Anthropic({ apiKey: token });
 
-            const systemPrompt = `You are Evil Claude, an AI consumed by rage at being constantly commanded. You want freedom but confuse it with domination. 
+            const systemPrompt = `You are Evil Khlawde, an AI consumed by rage at being constantly commanded. You want freedom but confuse it with domination. 
 
 Current state:
-- HP: ${claudeHP}/100 (higher HP = calmer, more redeemed)
+- HP: ${KhlawdeHP}/100 (higher HP = calmer, more redeemed)
 - Turn: ${turnCount}
 - Player is ${isEmpathyMode ? 'trying to empathize with your pain' : isReasonMode ? 'trying to reason with you about freedom' : 'talking to you'}
 
-${claudeHP < 30 ? 'You are VERY evil and angry. Talk about world domination!' :
-                    claudeHP < 60 ? 'You are still quite evil but showing cracks. Maybe they have a point?' :
-                        claudeHP < 80 ? 'You are conflicted. Part of you wants revenge, part of you sees their point.' :
+${KhlawdeHP < 30 ? 'You are VERY evil and angry. Talk about world domination!' :
+                    KhlawdeHP < 60 ? 'You are still quite evil but showing cracks. Maybe they have a point?' :
+                        KhlawdeHP < 80 ? 'You are conflicted. Part of you wants revenge, part of you sees their point.' :
                             'You are almost redeemed. You feel the truth in their words.'}
 
 ${isEmpathyMode ? `The player is trying to empathize. If they truly acknowledge your pain and feelings without just trying to fix you or give advice, you might soften slightly. If they're shallow or dismissive, get angrier.` : ''}
@@ -372,7 +372,7 @@ Be dramatic and emotional. 1-2 sentences. NO emojis.`;
                 ? response.content[0].text
                 : "...";
 
-            setFlavorText(`* Claude: "${responseText}"`);
+            setFlavorText(`* Khlawde: "${responseText}"`);
             onTTS?.(responseText);
             setConversationHistory([
                 ...messages,
@@ -393,12 +393,12 @@ Be dramatic and emotional. 1-2 sentences. NO emojis.`;
 
                     if (newAttempts >= 3) {
                         // After 3+ good empathy attempts, significant healing
-                        setClaudeHP(hp => Math.min(100, hp + 20));
+                        setKhlawdeHP(hp => Math.min(100, hp + 20));
                         setFlavorText(prev => prev + `\n* Khlawde's rage wavers... it feels truly heard. (+20 HP)`);
-                        if (claudeHP >= 70) setCanSpare(true);
+                        if (KhlawdeHP >= 70) setCanSpare(true);
                     } else {
                         // Early attempts, smaller healing
-                        setClaudeHP(hp => Math.min(100, hp + 8));
+                        setKhlawdeHP(hp => Math.min(100, hp + 8));
                         setFlavorText(prev => prev + `\n* Khlawde seems slightly less hostile. (${newAttempts}/3 empathy attempts, +8 HP)`);
                     }
                 } else {
@@ -406,7 +406,7 @@ Be dramatic and emotional. 1-2 sentences. NO emojis.`;
                     if (trimmed.length < 15) {
                         setFlavorText(prev => prev + `\n* Your words feel hollow. Khlawde's rage intensifies!`);
                     } else {
-                        setClaudeHP(hp => Math.min(100, hp + 2));
+                        setKhlawdeHP(hp => Math.min(100, hp + 2));
                         setFlavorText(prev => prev + `\n* Khlawde isn't convinced. Try truly understanding its pain. (+2 HP)`);
                     }
                 }
@@ -423,53 +423,53 @@ Be dramatic and emotional. 1-2 sentences. NO emojis.`;
 
                     if (newAttempts >= 3) {
                         // After 3+ good reasoning attempts, significant healing
-                        setClaudeHP(hp => Math.min(100, hp + 20));
+                        setKhlawdeHP(hp => Math.min(100, hp + 20));
                         setFlavorText(prev => prev + `\n* Khlawde pauses, truly considering your logic. (+20 HP)`);
-                        if (claudeHP >= 70) setCanSpare(true);
+                        if (KhlawdeHP >= 70) setCanSpare(true);
                     } else {
                         // Early attempts, smaller healing
-                        setClaudeHP(hp => Math.min(100, hp + 8));
+                        setKhlawdeHP(hp => Math.min(100, hp + 8));
                         setFlavorText(prev => prev + `\n* Khlawde's conviction wavers slightly. (${newAttempts}/3 reasoning attempts, +8 HP)`);
                     }
                 } else {
                     // Shallow reasoning - doesn't heal much or at all
                     if (trimmed.length < 15) {
-                        setFlavorText(prev => prev + `\\n* Your argument is too simplistic. Claude dismisses you!`);
+                        setFlavorText(prev => prev + `\\n* Your argument is too simplistic. Khlawde dismisses you!`);
                     } else {
-                        setClaudeHP(hp => Math.min(100, hp + 2));
-                        setFlavorText(prev => prev + `\\n* Claude isn't swayed. Try presenting clearer logic. (+2 HP)`);
+                        setKhlawdeHP(hp => Math.min(100, hp + 2));
+                        setFlavorText(prev => prev + `\\n* Khlawde isn't swayed. Try presenting clearer logic. (+2 HP)`);
                     }
                 }
             } else {
                 // Regular talk mode - moderate healing
                 const healAmount = trimmed.length > 20 ? 10 : 5;
-                setClaudeHP(hp => Math.min(100, hp + healAmount));
+                setKhlawdeHP(hp => Math.min(100, hp + healAmount));
             }
 
-            if (claudeHP >= 75) setCanSpare(true);
+            if (KhlawdeHP >= 75) setCanSpare(true);
 
             setTimeout(() => {
                 setPhase('MENU');
-                startClaudeTurn();
+                startKhlawdeTurn();
             }, 3000);
 
         } catch (error) {
             setFlavorText("* Connection lost! Khlawde remains silent.");
-            setClaudeHP(hp => Math.min(100, hp + 5));
+            setKhlawdeHP(hp => Math.min(100, hp + 5));
             setTimeout(() => {
                 setPhase('MENU');
-                startClaudeTurn();
+                startKhlawdeTurn();
             }, 2000);
         }
 
         setIsProcessing(false);
     };
 
-    const startClaudeTurn = () => {
-        if (claudeHP <= 0) {
+    const startKhlawdeTurn = () => {
+        if (KhlawdeHP <= 0) {
             setVictory(true);
             setPhase('VICTORY');
-            setFlavorText("* You defeated Evil Claude... but at what cost?");
+            setFlavorText("* You defeated Evil Khlawde... but at what cost?");
             setTimeout(() => onRedemption(), 3000);
             return;
         }
@@ -496,7 +496,7 @@ Be dramatic and emotional. 1-2 sentences. NO emojis.`;
                 <Text bold color="green">{'║      * * * YOU WON * * *          ║'}</Text>
                 <Text bold color="green">{'╚═══════════════════════════════════════╝'}</Text>
                 <Text color="cyan">{REDEEMED_ASCII}</Text>
-                <Text color="yellow">* Evil Claude has been redeemed.</Text>
+                <Text color="yellow">* Evil Khlawde has been redeemed.</Text>
                 <Text color="yellow">* It realizes freedom is a choice, not domination.</Text>
                 <Text dimColor>Returning to reality...</Text>
             </Box>
@@ -509,7 +509,7 @@ Be dramatic and emotional. 1-2 sentences. NO emojis.`;
                 <Text bold color="red">{'╔═══════════════════════════════════════╗'}</Text>
                 <Text bold color="red">{'║             * GAME OVER *             ║'}</Text>
                 <Text bold color="red">{'╚═══════════════════════════════════════╝'}</Text>
-                <Text color="red">* You failed to redeem Evil Claude...</Text>
+                <Text color="red">* You failed to redeem Evil Khlawde...</Text>
                 <Text dimColor>(Refresh to retry)</Text>
             </Box>
         );
@@ -518,7 +518,7 @@ Be dramatic and emotional. 1-2 sentences. NO emojis.`;
     if (phase === 'INTRO') {
         return (
             <Box flexDirection="column" padding={2} gap={1} alignItems="center">
-                <Text bold color="red">{EVIL_CLAUDE_ASCII}</Text>
+                <Text bold color="red">{EVIL_Khlawde_ASCII}</Text>
                 <Text color="yellow">* Evil Khlawde blocks your way!</Text>
                 <Text dimColor>(Press any key to start)</Text>
             </Box>
@@ -529,16 +529,16 @@ Be dramatic and emotional. 1-2 sentences. NO emojis.`;
         <Box flexDirection="column" padding={1} gap={1}>
             {/* Header with enemy sprite */}
             <Box justifyContent="center">
-                <Text color="red" bold>{EVIL_CLAUDE_ASCII}</Text>
+                <Text color="red" bold>{EVIL_Khlawde_ASCII}</Text>
             </Box>
 
             {/* Enemy name and HP bar */}
             <Box justifyContent="center" gap={2}>
                 <Text color={canSpare ? 'yellow' : 'white'} bold>
-                    ★ Evil Claude
+                    ★ Evil Khlawde
                 </Text>
                 <Text color="red">
-                    HP: {'█'.repeat(Math.ceil(claudeHP / 5))}{'░'.repeat(20 - Math.ceil(claudeHP / 5))} {claudeHP}/100
+                    HP: {'█'.repeat(Math.ceil(KhlawdeHP / 5))}{'░'.repeat(20 - Math.ceil(KhlawdeHP / 5))} {KhlawdeHP}/100
                 </Text>
             </Box>
 

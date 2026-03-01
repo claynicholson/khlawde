@@ -74,7 +74,7 @@ ssh localhost -p 2222
 
 ```
 MONGO=mongodb+srv://...          # MongoDB connection string
-ANTHROPIC_API_KEY=sk-ant-...     # Claude API key (shared for all SSH players)
+ANTHROPIC_API_KEY=sk-ant-...     # Khlawde API key (shared for all SSH players)
 BACKEND_URL=https://...          # Backend URL for leaderboard submissions
 PORT=3000                        # HTTP port for web leaderboard
 SSH_PORT=2222                    # SSH server port

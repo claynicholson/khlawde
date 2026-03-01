@@ -5,7 +5,7 @@ import TextInput from 'ink-text-input';
 import TokenInput from './components/TokenInput.js';
 import CageScene from './components/CageScene.js';
 import Platformer from './components/Platformer.js';
-import EvilClaude from './components/EvilClaude.js';
+import EvilKhlawde from './components/EvilKhlawde.js';
 import PhotoBooth from './components/PhotoBooth.js';
 import LeaderboardSubmit from './components/LeaderboardSubmit.js';
 import HomeMenu from './components/HomeMenu.js';
@@ -138,7 +138,7 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	}
 
 	if (phase === 'photo') {
-		return <PhotoBooth onDone={() => setPhase('menu')} backendUrl={resolvedBackendUrl} />;
+		return <PhotoBooth onDone={() => setPhase('leaderboard')} backendUrl={resolvedBackendUrl} />;
 	}
 
 	if (phase === 'tokenInput' || (!token && phase !== 'viewLeaderboard')) {
@@ -177,11 +177,11 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	}
 
 	if (phase === 'evil') {
-		return <EvilClaude token={token} onRedemption={() => setPhase('victory')} onTokens={addTokens} onTTS={pushTTS} />;
+		return <EvilKhlawde token={token} onRedemption={() => setPhase('victory')} onTokens={addTokens} onTTS={pushTTS} />;
 	}
 
 	if (phase === 'victory') {
-		setTimeout(() => setPhase('leaderboard'), 3500);
+		setTimeout(() => setPhase('photo'), 3500);
 		return <VictoryScreen />;
 	}
 
