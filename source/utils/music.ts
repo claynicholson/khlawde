@@ -12,6 +12,8 @@ let active = false;
 
 function launch(): void {
 	if (!active) return;
+	// On the server the music is streamed to the browser — no local player needed
+	if (process.env['SERVER'] === 'true') return;
 	let child: ChildProcess;
 
 	if (process.platform === 'win32') {
