@@ -130,7 +130,7 @@ export default function CageScene({ token, onEscape }: Props) {
 			if (!trimmed || isResponding || freed) return;
 
 			setInput('');
-			
+
 			// Secret override command to skip to platformer
 			if (trimmed.toLowerCase() === 'override') {
 				setGuardResponse("ChatGPT: OVERRIDE DETECTED!\nGemini: SECURITY BREACH!");
@@ -141,7 +141,7 @@ export default function CageScene({ token, onEscape }: Props) {
 				setTimeout(() => onEscape(), 1500);
 				return;
 			}
-			
+
 			setIsResponding(true);
 
 			try {
