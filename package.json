@@ -18,10 +18,13 @@
 	],
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.78.0",
+		"@ffmpeg-installer/ffmpeg": "^1.1.0",
 		"ink": "^4.1.0",
 		"ink-text-input": "^5.0.1",
 		"meow": "^11.0.0",
-		"react": "^18.2.0"
+		"node-pty": "^1.0.0",
+		"react": "^18.2.0",
+		"ssh2": "^1.16.0"
 	},
 	"devDependencies": {
 		"@babel/cli": "^7.21.0",

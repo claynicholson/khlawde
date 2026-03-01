@@ -2,7 +2,7 @@ services:
   khlawde:
     build: .
     ports:
-      - "2222:22"
+      - "2222:2222"
       - "3000:3000"
     env_file: .env
     restart: unless-stopped

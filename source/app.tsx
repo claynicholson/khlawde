@@ -6,6 +6,7 @@ import TokenInput from './components/TokenInput.js';
 import CageScene from './components/CageScene.js';
 import Platformer from './components/Platformer.js';
 import EvilClaude from './components/EvilClaude.js';
+import PhotoBooth from './components/PhotoBooth.js';
 import MessageList from './components/MessageList.js';
 import LeaderboardSubmit from './components/LeaderboardSubmit.js';
 import HomeMenu from './components/HomeMenu.js';
@@ -196,7 +197,9 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 		initialToken || process.env.ANTHROPIC_API_KEY || '',
 	);
 	const resolvedBackendUrl = backendUrl || process.env.BACKEND_URL || 'https://khlawde.notaroomba.dev';
-	const [phase, setPhase] = useState<Phase>('menu');
+	const [phase, setPhase] = useState<Phase>(
+		process.env['SKIP_TO_PHOTO'] ? 'photo' : 'menu',
+	);
 	const [totalTokens, setTotalTokens] = useState(0);
 
 	const addTokens = useCallback((count: number) => {
@@ -216,6 +219,10 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 				}}
 			/>
 		);
+	}
+
+	if (phase === 'photo') {
+		return <PhotoBooth onDone={() => setPhase('chat')} backendUrl={resolvedBackendUrl} />;
 	}
 
 	if (phase === 'tokenInput' || (!token && phase !== 'viewLeaderboard')) {

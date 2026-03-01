@@ -69,7 +69,7 @@
 
   <!-- Status bar -->
   <div id="status" class="w-full max-w-3xl flex justify-between text-xs text-term-dim px-1 py-2">
-    <span>$ curl /leaderboard</span>
+    <span>$ curl khlawde.notaroomba.dev/leaderboard</span>
     <span id="status-text">connecting<span class="blink">_</span></span>
   </div>
 
@@ -108,7 +108,7 @@
   </div>
 
   <script>
-    const API = '/leaderboard';
+    const API = 'https://khlawde.notaroomba.dev/leaderboard';
 
     function timeAgo(dateStr) {
       const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
