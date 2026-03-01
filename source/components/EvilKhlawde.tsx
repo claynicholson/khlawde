@@ -4,12 +4,34 @@ import TextInput from 'ink-text-input';
 import Anthropic from '@anthropic-ai/sdk';
 
 const EVIL_Khlawde_ASCII = `
-     👁️                    👁️
-        \\                /
-         \\    🤖💀🤖    /
-          \\            /
-           \\          /
-    ⚡️⚡️⚡️ POWER ⚡️⚡️⚡️
+             +=-+-=                                                              =-+-=+
+         +==*-==-*-+                                                            +-*-==-*==+
+       =+==-==-=:=+=+                                                          +===:=-==-==+=
+      ===#%#++#=+=#%#                                                          #%#=+=#++#%#===
+      ===*%#   =   *+*                                                        ++*   =   #%*===
+     +==+#*                              @@@@@@@@@@@@                                    *#+==+
+     ===++*                            @@@@@      @@@@@ @@@@                             *++===
+    ===+**                           @@@@          @@@@@@@@@@@@@                          **+===
+   =--=++*                           @@@        @@@@@@       @@@@@                        *++=-==
+  +=-==++*                       @@@@@@     @@@@@@@             @@@                       *++==-=+
+  ==-==+***                =====@@@@@@@    @@@@       @@@@       @@@=====                ***+==-==
+ +==--=+***+            +===----@   @@@    @@      @@@@@@@@@@     @@-----==+            +***+=--==+
+ ++=--=+++**    +===========----    @@@    @@   @@@@      @@@@@@  @@----===========+    **+++=--=++
+ ++===++++##  +=-------==-====-:    @@@    @@@@@@ @@@@       @@@@@@@:-====-==-------=+  ##++++===++
++*++===++*#+++===------=====*+--    @@@    @@@       @@@@       @@@@--+*=====------===+++#*++===++*+
+=++++++++++===--===+++++++++++==    @@@    @@         @@@@@@@     @@==+++++++++++===--===++++++++++=
+***+++=+++=-=-------===++++++**+     @@@@  @@         @@    @@@     +**++++++===-------=-=+++=+++***
+**++*##+=------==+++++*##%@@%%%%@       @@@@@         @@    @@@     %%%%@@%##*+++++==------=+##*++**
+ *#+---===++++**++*##%%##%**+===@@@@       @@@@@   @@@@@    @@@     ===+**%##%%##*++**++++===---+#*
+    -##############%##%#= +#*+==@@@@@@@       @@@@@@  @@    @@@     ==+*#+ =#%##%##############=
+            -+**++=-        **+=@   @@@@@@@  @@@@     @@    @@@    @=+**        -=++**+=
+                              +*@       @@@@@@       @@@    @@@  @@@*+
+                               *@@                @@@@@@    @@@@@@@ -
+                                @@@@          @@@@@@@      @@@@@
+                                  @@@@@@@@@@@@@@@         @@@@
+                                    @@@@@@@@@@@         @@@@@
+                                            @@@@@@@@@@@@@@@
+                                                @@@@@@@@
 `;
 
 const REDEEMED_ASCII = `
@@ -49,13 +71,13 @@ export default function EvilKhlawde({ token, onRedemption, onTokens, onTTS }: Pr
     const [heartX, setHeartX] = useState(12);
     const [heartY, setHeartY] = useState(5);
     const [bullets, setBullets] = useState<Bullet[]>([]);
-    const [dodgeTime, setDodgeTime] = useState(0);
+    const [, setDodgeTime] = useState(0);
     const [isProcessing, setIsProcessing] = useState(false);
 
     // Fight timing bar
     const [fightBarPosition, setFightBarPosition] = useState(0);
     const [fightBarDirection, setFightBarDirection] = useState(1);
-    const [fightDamage, setFightDamage] = useState(0);
+    const [, setFightDamage] = useState(0);
 
     // Dialogue
     const [dialogueInput, setDialogueInput] = useState('');
@@ -167,7 +189,7 @@ export default function EvilKhlawde({ token, onRedemption, onTokens, onTTS }: Pr
     }, [phase, fightBarDirection]);
 
     // Keyboard controls
-    useInput((input, key) => {
+    useInput((_input, key) => {
         if (victory || defeat || isProcessing) return;
 
         if (phase === 'INTRO') {
