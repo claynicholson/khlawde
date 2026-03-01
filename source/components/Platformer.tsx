@@ -253,9 +253,9 @@ Classification: TOP SECRET | Authorized Personnel Only
 Unauthorized disclosure is prohibited by Federal Law.`;
 }
 
-type Props = { token: string; onWin: () => void; onTokens?: (count: number) => void };
+type Props = { token: string; onWin: () => void; onTokens?: (count: number) => void; onTTS?: (text: string) => void };
 
-export default function Platformer({ token, onWin, onTokens }: Props) {
+export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 	const [input, setInput] = useState('');
 	const [bomb] = useState<BombState>(generateBomb());
 	const [manual] = useState<string>(generateManual(bomb));
@@ -536,8 +536,9 @@ Note: The actual cutting happens when the player types the command, you just des
 				const finalMessage = await stream.finalMessage();
 				onTokens?.(finalMessage.usage.input_tokens + finalMessage.usage.output_tokens);
 
-					setClaudeResponse(`Khlawde: ${fullResponse}`);
-					setConversation([...trimmedConversation, `Khlawde: ${fullResponse}`]);
+				setClaudeResponse(`Claude: ${fullResponse}`);
+				setConversation([...trimmedConversation, `Claude: ${fullResponse}`]);
+				onTTS?.(fullResponse);
 			} catch (error) {
 				console.error('Bomb defusal API error:', error);
 				let errorMsg = "Khlawde: 'Sorry, I lost connection! Try again!'";
@@ -574,6 +575,7 @@ Note: The actual cutting happens when the player types the command, you just des
 			buttonHeld,
 			checkWireSolution,
 			token,
+			onTTS,
 		],
 	);
 

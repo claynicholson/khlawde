@@ -30,9 +30,9 @@ interface Bullet {
     vy: number;
 }
 
-type Props = { token: string; onRedemption: () => void; onTokens?: (count: number) => void };
+type Props = { token: string; onRedemption: () => void; onTokens?: (count: number) => void; onTTS?: (text: string) => void };
 
-export default function EvilClaude({ token, onRedemption, onTokens }: Props) {
+export default function EvilClaude({ token, onRedemption, onTokens, onTTS }: Props) {
     // Game state
     const [phase, setPhase] = useState<GamePhase>('INTRO');
     const [playerHP, setPlayerHP] = useState(20);
@@ -372,7 +372,8 @@ Be dramatic and emotional. 1-2 sentences. NO emojis.`;
                 ? response.content[0].text
                 : "...";
 
-            setFlavorText(`* Khlawde: "${responseText}"`);    
+            setFlavorText(`* Claude: "${responseText}"`);
+            onTTS?.(responseText);
             setConversationHistory([
                 ...messages,
                 { role: 'assistant', content: responseText },

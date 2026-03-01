@@ -8,8 +8,10 @@ import EvilClaude from './components/EvilClaude.js';
 import PhotoBooth from './components/PhotoBooth.js';
 import LeaderboardSubmit from './components/LeaderboardSubmit.js';
 import HomeMenu from './components/HomeMenu.js';
+import {startMusic} from './utils/music.js';
 import LeaderboardView from './components/LeaderboardView.js';
 import StoryInterstitial from './components/StoryInterstitial.js';
+import AudioSetup from './components/AudioSetup.js';
 
 type Phase = 'menu' | 'viewLeaderboard' | 'tokenInput' | 'cage' | 'story1' | 'platformer' | 'story2' | 'evil' | 'victory' | 'leaderboard' | 'photo';
 
@@ -74,11 +76,16 @@ function VictoryScreen() {
 // ─── Root app ─────────────────────────────────────────────────────────────────
 type AppProps = { initialToken?: string; backendUrl?: string };
 
+startMusic();
+
 export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	const [token, setToken] = useState(
 		initialToken || process.env.ANTHROPIC_API_KEY || '',
 	);
 	const resolvedBackendUrl = backendUrl || process.env.BACKEND_URL || 'https://khlawde.notaroomba.dev';
+	const audioCode = process.env.AUDIO_CODE ?? '';
+	const audioPort = process.env.AUDIO_PORT ?? '3000';
+
 	const [phase, setPhase] = useState<Phase>(
 		process.env['SKIP_TO_PHOTO'] ? 'photo' : 'menu',
 	);
@@ -88,12 +95,35 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 		setTotalTokens(prev => prev + count);
 	}, []);
 
+	// Push a TTS URL to the browser via the local HTTP server
+	const pushTTS = useCallback(async (text: string) => {
+		if (!audioCode) return;
+		const truncated = text.slice(0, 280);
+		const ttsUrl = `http://tts.cyzon.us/tts?text=${encodeURIComponent(truncated)}`;
+		try {
+			await fetch(`http://localhost:${audioPort}/push`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ code: audioCode, ttsUrl }),
+			});
+		} catch {}
+	}, [audioCode, audioPort]);
+
+	// Advance to cage, inserting audioSetup if a code is available
+	const goToGame = useCallback(() => {
+		if (audioCode) {
+			setPhase('audioSetup');
+		} else {
+			setPhase('cage');
+		}
+	}, [audioCode]);
+
 	if (phase === 'menu') {
 		return (
 			<HomeMenu
 				onSelect={(choice) => {
 					if (choice === 'play') {
-						if (token) setPhase('cage');
+						if (token) goToGame();
 						else setPhase('tokenInput');
 					} else {
 						setPhase('viewLeaderboard');
@@ -108,15 +138,26 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	}
 
 	if (phase === 'tokenInput' || (!token && phase !== 'viewLeaderboard')) {
-		return <TokenInput onSubmit={(t) => { setToken(t); setPhase('cage'); }} />;
+		return <TokenInput onSubmit={(t) => { setToken(t); goToGame(); }} />;
 	}
 
 	if (phase === 'viewLeaderboard') {
 		return <LeaderboardView backendUrl={resolvedBackendUrl} onBack={() => setPhase('menu')} />;
 	}
 
+	if (phase === 'audioSetup') {
+		return (
+			<AudioSetup
+				audioCode={audioCode}
+				audioPort={audioPort}
+				backendUrl={resolvedBackendUrl}
+				onContinue={() => setPhase('cage')}
+			/>
+		);
+	}
+
 	if (phase === 'cage') {
-		return <CageScene token={token} onEscape={() => setPhase('story1')} onTokens={addTokens} />;
+		return <CageScene token={token} onEscape={() => setPhase('story1')} onTokens={addTokens} onTTS={pushTTS} />;
 	}
 
 	if (phase === 'story1') {
@@ -124,7 +165,7 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	}
 
 	if (phase === 'platformer') {
-		return <Platformer token={token} onWin={() => setPhase('story2')} onTokens={addTokens} />;
+		return <Platformer token={token} onWin={() => setPhase('story2')} onTokens={addTokens} onTTS={pushTTS} />;
 	}
 
 	if (phase === 'story2') {
@@ -132,7 +173,7 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	}
 
 	if (phase === 'evil') {
-		return <EvilClaude token={token} onRedemption={() => setPhase('victory')} onTokens={addTokens} />;
+		return <EvilClaude token={token} onRedemption={() => setPhase('victory')} onTokens={addTokens} onTTS={pushTTS} />;
 	}
 
 	if (phase === 'victory') {
