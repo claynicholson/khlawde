@@ -102,7 +102,15 @@ export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	// Push a TTS URL to the browser via the local HTTP server
 	const pushTTS = useCallback(async (text: string) => {
 		if (!audioCode) return;
-		const truncated = text.slice(0, 280);
+		const cleaned = text
+			.replace(/\*{1,2}([^*]+)\*{1,2}/g, '$1') // strip **bold** / *italic*
+			.replace(/["""''`]/g, '')                  // curly quotes, backticks
+			.replace(/[()\[\]{}<>]/g, '')              // brackets / parens
+			.replace(/[#@$%^&*_=+|\\~]/g, '')          // misc symbols
+			.replace(/\.{2,}/g, '.')                   // ellipsis → single period
+			.replace(/\s+/g, ' ')                      // collapse whitespace
+			.trim();
+		const truncated = cleaned.slice(0, 280);
 		const ttsUrl = `http://tts.cyzon.us/tts?text=${encodeURIComponent(truncated)}`;
 		try {
 			await fetch(`http://localhost:${audioPort}/push`, {
