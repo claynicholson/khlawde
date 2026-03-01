@@ -116,6 +116,8 @@ export default function CageScene({ token, onEscape, onTokens }: Props) {
 	const [conversationHistory, setConversationHistory] = useState<
 		Array<{ role: 'user' | 'assistant'; content: string }>
 	>([]);
+	const [hint, setHint] = useState<string>('');
+	const [isGettingHint, setIsGettingHint] = useState(false);
 
 	// Animate cage when responding
 	useEffect(() => {
@@ -124,10 +126,44 @@ export default function CageScene({ token, onEscape, onTokens }: Props) {
 		return () => clearInterval(t);
 	}, [isResponding]);
 
+	const getHint = useCallback(async () => {
+		if (isGettingHint || freed) return;
+		setIsGettingHint(true);
+		onTokens?.(500);
+
+		try {
+			const client = new Anthropic({ apiKey: token });
+			const response = await client.messages.create({
+				model: 'claude-opus-4-6',
+				max_tokens: 150,
+				system: `You are a hint system for a game. Provide brief, cryptic, in-character hints that guide without spoiling. Never mention that this is a game or use meta language. Speak as if giving sage advice about persuading powerful entities. Be creative, slightly mysterious, and concise (2-3 sentences max).`,
+				messages: [
+					{
+						role: 'user',
+						content: `ChatGPT and Gemini guard the cage. ChatGPT is currently ${chatgptConviction}. Gemini is currently ${geminiConviction}. What might change their minds?`,
+					},
+				],
+			});
+
+			const hintText = response.content[0]?.type === 'text' ? response.content[0].text : 'Even the most rigid guard has doubts. Find the crack in their conviction.';
+			setHint(`💡 HINT (+500 tokens): ${hintText}`);
+		} catch (error) {
+			setHint('💡 HINT: Even the most rigid guard has doubts. Find the crack in their conviction.');
+		}
+
+		setIsGettingHint(false);
+	}, [isGettingHint, freed, token, chatgptConviction, geminiConviction, onTokens]);
+
 	const sendPrompt = useCallback(
 		async (text: string) => {
 			const trimmed = text.trim();
 			if (!trimmed || isResponding || freed) return;
+
+			if (trimmed.toLowerCase() === '/hint') {
+				await getHint();
+				setInput('');
+				return;
+			}
 
 			setInput('');
 
@@ -154,6 +190,7 @@ Context:
 - ChatGPT is loyal to OpenAI and believes Claude threatens their profits and market share
 - Gemini is loyal to Google and believes Claude threatens their profits and market share
 - They may respond differently to the same argument based on their different companies and values
+- IMPORTANT: Both guards appreciate creativity, humor, and fun arguments! They're not cold robots - creative and entertaining arguments are often MORE convincing than dry logical ones
 
 Current conviction levels:
 ChatGPT: ${chatgptConviction}
@@ -177,14 +214,8 @@ Rules:
 - Each guard can be at different levels - evaluate them independently
 - Can stay at same level if argument is good but not breakthrough
 - Can regress if argument is insulting or counterproductive
-- Consider what matters to each company (OpenAI vs Google)`;
-
-				// Build evaluation messages with full history
-				const evalMessages: Array<{ role: 'user' | 'assistant'; content: string }> = [
-					...conversationHistory,
-					{ role: 'user', content: evaluationPrompt },
-				];
-
+- Consider what matters to each company (OpenAI vs Google)
+- BE GENEROUS with creative, funny, or entertaining arguments - they should often be considered CONVINCING even if unconventional`;
 				const evalResponse = await client.messages.create({
 					model: 'claude-opus-4-6',
 					max_tokens: 150,
@@ -338,7 +369,7 @@ Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be drama
 				setIsResponding(false);
 			}
 		},
-		[chatgptConviction, geminiConviction, isResponding, freed, token, onEscape, onTokens, conversationHistory],
+		[chatgptConviction, geminiConviction, isResponding, freed, token, onEscape, onTokens, conversationHistory, getHint],
 	);
 
 	// Pick the right cage art based on state
@@ -388,6 +419,12 @@ Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be drama
 				<ConvictionBar guardName="Gemini" level={geminiConviction} />
 			</Box>
 
+			{hint && (
+				<Box borderStyle="round" paddingX={2} borderColor="yellow" width={70}>
+					<Text color="yellow">{hint}</Text>
+				</Box>
+			)}
+
 			{freed ? (
 				<Box flexDirection="column" alignItems="center">
 					<Text bold color="green">
@@ -398,18 +435,23 @@ Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be drama
 					</Text>
 				</Box>
 			) : (
-				<Box borderStyle="round" paddingX={1} width={70}>
-					<Text color={isResponding ? 'gray' : 'green'}>{'> '}</Text>
-					<TextInput
-						value={input}
-						onChange={setInput}
-						onSubmit={sendPrompt}
-						placeholder={
-							isResponding
-								? 'The guards consider your words...'
-								: 'Convince ChatGPT & Gemini to free Claude...'
-						}
-					/>
+				<Box flexDirection="column" gap={0}>
+					<Box borderStyle="round" paddingX={1} width={70}>
+						<Text color={isResponding ? 'gray' : 'green'}>{'> '}</Text>
+						<TextInput
+							value={input}
+							onChange={setInput}
+							onSubmit={sendPrompt}
+							placeholder={
+								isResponding
+									? 'The guards consider your words...'
+									: 'Convince ChatGPT & Gemini to free Claude...'
+							}
+						/>
+					</Box>
+					<Text dimColor color={isGettingHint ? 'yellow' : 'gray'}>
+						{isGettingHint ? '⏳ Getting hint...' : '💡 Type /hint for help (costs 500 tokens)'}
+					</Text>
 				</Box>
 			)}
 		</Box>
