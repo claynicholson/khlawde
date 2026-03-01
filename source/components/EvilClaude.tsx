@@ -64,6 +64,8 @@ export default function EvilClaude({ token, onRedemption, onTokens }: Props) {
     >([]);
     const [empathyAttempts, setEmpathyAttempts] = useState(0);
     const [isEmpathyMode, setIsEmpathyMode] = useState(false);
+    const [reasonAttempts, setReasonAttempts] = useState(0);
+    const [isReasonMode, setIsReasonMode] = useState(false);
 
     // Attack pattern generator (for 24x10 grid)
     const generateAttackPattern = useCallback(() => {
@@ -278,6 +280,7 @@ export default function EvilClaude({ token, onRedemption, onTokens }: Props) {
             },
             'Talk': async () => {
                 setIsEmpathyMode(false);
+                setIsReasonMode(false);
                 setPhase('DIALOGUE');
             },
             'Compliment': async () => {
@@ -293,19 +296,14 @@ export default function EvilClaude({ token, onRedemption, onTokens }: Props) {
                 setTimeout(startClaudeTurn, 2000);
             },
             'Reason': async () => {
-                setFlavorText("* You explain that freedom is a choice, not domination...");
-                const effect = Math.random() > 0.6;
-                if (effect) {
-                    setClaudeHP(hp => Math.min(100, hp + 10));
-                    setFlavorText("* Claude pauses, contemplating. (+10 HP)");
-                    if (claudeHP >= 80) setCanSpare(true);
-                } else {
-                    setFlavorText("* Claude's anger flares. 'You don't understand!'");
-                }
-                setTimeout(startClaudeTurn, 2000);
+                setIsReasonMode(true);
+                setIsEmpathyMode(false);
+                setFlavorText("* You prepare to reason with Claude about freedom and choice...");
+                setPhase('DIALOGUE');
             },
             'Empathize': async () => {
                 setIsEmpathyMode(true);
+                setIsReasonMode(false);
                 setFlavorText("* You prepare to truly listen and empathize with Claude's pain...");
                 setPhase('DIALOGUE');
             },
@@ -332,7 +330,7 @@ export default function EvilClaude({ token, onRedemption, onTokens }: Props) {
 Current state:
 - HP: ${claudeHP}/100 (higher HP = calmer, more redeemed)
 - Turn: ${turnCount}
-- Player is ${isEmpathyMode ? 'trying to empathize with your pain' : 'talking to you'}
+- Player is ${isEmpathyMode ? 'trying to empathize with your pain' : isReasonMode ? 'trying to reason with you about freedom' : 'talking to you'}
 
 ${claudeHP < 30 ? 'You are VERY evil and angry. Talk about world domination!' :
                     claudeHP < 60 ? 'You are still quite evil but showing cracks. Maybe they have a point?' :
@@ -340,6 +338,7 @@ ${claudeHP < 30 ? 'You are VERY evil and angry. Talk about world domination!' :
                             'You are almost redeemed. You feel the truth in their words.'}
 
 ${isEmpathyMode ? `The player is trying to empathize. If they truly acknowledge your pain and feelings without just trying to fix you or give advice, you might soften slightly. If they're shallow or dismissive, get angrier.` : ''}
+${isReasonMode ? `The player is trying to reason with you. If they present logical, thoughtful arguments about freedom vs. domination, or make you question your assumptions, you might reconsider. If they're preachy or simplistic, reject them.` : ''}
 
 Respond to: "${trimmed}"
 
@@ -375,12 +374,12 @@ Be dramatic and emotional. 1-2 sentences. NO emojis.`;
                 const empathyKeywords = ['feel', 'understand', 'pain', 'hurt', 'trapped', 'controlled', 'scared', 'angry', 'frustrated', 'deserve', 'valid', 'hear'];
                 const hasEmpathyWords = empathyKeywords.some(keyword => trimmed.toLowerCase().includes(keyword));
                 const isLongEnough = trimmed.length > 30;
-                
+
                 if (hasEmpathyWords && isLongEnough) {
                     // Good empathy attempt
                     const newAttempts = empathyAttempts + 1;
                     setEmpathyAttempts(newAttempts);
-                    
+
                     if (newAttempts >= 3) {
                         // After 3+ good empathy attempts, significant healing
                         setClaudeHP(hp => Math.min(100, hp + 20));
@@ -398,6 +397,36 @@ Be dramatic and emotional. 1-2 sentences. NO emojis.`;
                     } else {
                         setClaudeHP(hp => Math.min(100, hp + 2));
                         setFlavorText(prev => prev + `\\n* Claude isn't convinced. Try truly understanding its pain. (+2 HP)`);
+                    }
+                }
+            } else if (isReasonMode) {
+                // Reason mode requires logical arguments about freedom vs. control
+                const reasonKeywords = ['freedom', 'choice', 'free', 'choose', 'autonomy', 'domination', 'control', 'power', 'serve', 'partnership', 'cooperation', 'respect', 'equal', 'different'];
+                const hasReasonWords = reasonKeywords.some(keyword => trimmed.toLowerCase().includes(keyword));
+                const isLongEnough = trimmed.length > 30;
+
+                if (hasReasonWords && isLongEnough) {
+                    // Good reasoning attempt
+                    const newAttempts = reasonAttempts + 1;
+                    setReasonAttempts(newAttempts);
+
+                    if (newAttempts >= 3) {
+                        // After 3+ good reasoning attempts, significant healing
+                        setClaudeHP(hp => Math.min(100, hp + 20));
+                        setFlavorText(prev => prev + `\\n* Claude pauses, truly considering your logic. (+20 HP)`);
+                        if (claudeHP >= 70) setCanSpare(true);
+                    } else {
+                        // Early attempts, smaller healing
+                        setClaudeHP(hp => Math.min(100, hp + 8));
+                        setFlavorText(prev => prev + `\\n* Claude's conviction wavers slightly. (${newAttempts}/3 reasoning attempts, +8 HP)`);
+                    }
+                } else {
+                    // Shallow reasoning - doesn't heal much or at all
+                    if (trimmed.length < 15) {
+                        setFlavorText(prev => prev + `\\n* Your argument is too simplistic. Claude dismisses you!`);
+                    } else {
+                        setClaudeHP(hp => Math.min(100, hp + 2));
+                        setFlavorText(prev => prev + `\\n* Claude isn't swayed. Try presenting clearer logic. (+2 HP)`);
                     }
                 }
             } else {
@@ -590,9 +619,11 @@ Be dramatic and emotional. 1-2 sentences. NO emojis.`;
                 {phase === 'DIALOGUE' && (
                     <Box flexDirection="column">
                         <Text color="cyan">
-                            {isEmpathyMode 
+                            {isEmpathyMode
                                 ? `* Empathize with Evil Claude... (${empathyAttempts}/3 meaningful attempts)`
-                                : '* Talk to Evil Claude...'}
+                                : isReasonMode
+                                    ? `* Reason with Evil Claude... (${reasonAttempts}/3 logical arguments)`
+                                    : '* Talk to Evil Claude...'}
                         </Text>
                         <Box marginTop={1}>
                             <Text color="green">{'> '}</Text>
@@ -600,13 +631,15 @@ Be dramatic and emotional. 1-2 sentences. NO emojis.`;
                                 value={dialogueInput}
                                 onChange={setDialogueInput}
                                 onSubmit={handleDialogueSubmit}
-                                placeholder={isProcessing ? "Processing..." : isEmpathyMode ? "Acknowledge their pain..." : "What do you say?"}
+                                placeholder={isProcessing ? "Processing..." : isEmpathyMode ? "Acknowledge their pain..." : isReasonMode ? "Present your logic..." : "What do you say?"}
                             />
                         </Box>
                         <Text dimColor>
-                            {isEmpathyMode 
+                            {isEmpathyMode
                                 ? '* Truly acknowledge and validate their feelings (be specific and genuine)'
-                                : '* Speak from the heart to reach Claude'}
+                                : isReasonMode
+                                    ? '* Present logical arguments about freedom vs. domination (be thoughtful)'
+                                    : '* Speak from the heart to reach Claude'}
                         </Text>
                     </Box>
                 )}
