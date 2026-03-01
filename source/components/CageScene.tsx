@@ -134,7 +134,7 @@ export default function CageScene({ token, onEscape, onTokens, onTTS }: Props) {
 		try {
 			const client = new Anthropic({ apiKey: token });
 			const response = await client.messages.create({
-				model: 'khlawde-opus-4-6',
+				model: 'claude-opus-4-6',
 				max_tokens: 150,
 				system: `You are a hint system for a game. Provide brief, cryptic, in-character hints that guide without spoiling. Never mention that this is a game or use meta language. Speak as if giving sage advice about persuading powerful entities. Be creative, slightly mysterious, and concise (2-3 sentences max).`,
 				messages: [
@@ -222,7 +222,7 @@ Rules:
 - BE GENEROUS with creative, funny, or entertaining arguments - they should often be considered CONVINCING even if unconventional
 - If the argument is low-effort/lazy, keep them at current level or even regress them`;
 				const evalResponse = await client.messages.create({
-					model: 'khlawde-opus-4-6',
+					model: 'claude-opus-4-6',
 					max_tokens: 150,
 					messages: [{ role: 'user', content: evaluationPrompt }],
 				});
@@ -291,7 +291,7 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 				];
 
 				const stream = client.messages.stream({
-					model: 'khlawde-opus-4-6',
+					model: 'claude-opus-4-6',
 					max_tokens: 150,
 					system: systemPrompt + ' Do not use any emojis. Use plain text only.',
 					messages: guardMessages,
@@ -304,7 +304,7 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 						event.delta.type === 'text_delta'
 					) {
 						response += event.delta.text;
-						ttsBuf  += event.delta.text;
+						ttsBuf += event.delta.text;
 						setGuardResponse(response);
 						// Flush complete sentences as they arrive
 						const re = /[^.!?]*[.!?]+\s*/g;
@@ -419,7 +419,7 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 			>
 				<Box flexDirection="column" gap={0}>
 					<Text color="yellow" italic>
-					Khlawde: "{KhlawdePlea}"
+						Khlawde: "{KhlawdePlea}"
 					</Text>
 					<Text> </Text>
 					<Text color={freed ? 'green' : 'magenta'}>

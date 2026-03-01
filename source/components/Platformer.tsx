@@ -542,7 +542,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 				}));
 
 				const stream = client.messages.stream({
-					model: 'khlawde-opus-4-6',
+					model: 'claude-opus-4-6',
 					max_tokens: 300,
 					messages: contextMessages,
 					system: `You are Khlawde, helping your human friend defuse a bomb. YOU can see the bomb, but ONLY THEY have the defusal manual. You must describe what you see, and they will consult the manual to tell you what to do.
