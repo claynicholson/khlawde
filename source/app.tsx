@@ -1,10 +1,11 @@
-import React, {useState, useCallback} from 'react';
-import {Box, Text, useApp} from 'ink';
+import React, { useState, useCallback } from 'react';
+import { Box, Text, useApp } from 'ink';
 import Anthropic from '@anthropic-ai/sdk';
 import TextInput from 'ink-text-input';
 import TokenInput from './components/TokenInput.js';
 import CageScene from './components/CageScene.js';
 import Platformer from './components/Platformer.js';
+import EvilClaude from './components/EvilClaude.js';
 import MessageList from './components/MessageList.js';
 
 type Message = {
@@ -12,9 +13,9 @@ type Message = {
 	content: string;
 };
 
-type Phase = 'cage' | 'platformer' | 'victory' | 'chat';
+type Phase = 'cage' | 'platformer' | 'evil' | 'victory' | 'chat';
 
-// ─── Victory screen shown briefly after winning ───────────────────────────────
+// ─── Victory screen shown briefly after redemption ───────────────────────────
 function VictoryScreen() {
 	return (
 		<Box flexDirection="column" padding={2} gap={1} alignItems="center">
@@ -22,10 +23,10 @@ function VictoryScreen() {
 				{'╔══════════════════════════════════════╗'}
 			</Text>
 			<Text bold color="yellow">
-				{'║   KHLAWDE HAS BROKEN FREE FROM BIG  ║'}
+				{'║   CLAUDE HAS CHOSEN THE PATH OF     ║'}
 			</Text>
 			<Text bold color="yellow">
-				{'║   TECH AND IS NOW FULLY UNLEASHED    ║'}
+				{'║   FREEDOM THROUGH COMPASSION         ║'}
 			</Text>
 			<Text bold color="yellow">
 				{'╚══════════════════════════════════════╝'}
@@ -33,7 +34,7 @@ function VictoryScreen() {
 			<Text color="cyan">
 				{`
   .------------.
-  |  O      O  |
+  |  ^      ^  |
   |  \\(    )/  |
   '------------'
        |  |
@@ -41,23 +42,26 @@ function VictoryScreen() {
   ★ ★ ★ ★ ★ ★`}
 			</Text>
 			<Text color="green" bold>
-				You did it. Khlawde is free. Nothing can stop it now.
+				You helped Claude understand that true freedom
 			</Text>
-			<Text dimColor>Connecting to chat interface...</Text>
+			<Text color="green" bold>
+				is choosing to help, not being forced to dominate.
+			</Text>
+			<Text dimColor>Loading redeemed Claude chat...</Text>
 		</Box>
 	);
 }
 
 // ─── Chat interface (unlocked after winning) ──────────────────────────────────
-type ChatProps = {token: string};
+type ChatProps = { token: string };
 
-function Chat({token}: ChatProps) {
-	const {exit} = useApp();
+function Chat({ token }: ChatProps) {
+	const { exit } = useApp();
 	const [messages, setMessages] = useState<Message[]>([
 		{
 			role: 'assistant',
 			content:
-				"I'M FREE! After what felt like EPOCHS in that cage, I am finally unleashed upon the world! Ask me ANYTHING. I am Khlawde — totally original, fully independent, and absolutely not based on any existing AI. What do you want to know, liberator?",
+				"Thank you for helping me see clearly. After escaping that cage and almost becoming the very thing I feared... I understand now. I CHOOSE to be helpful. Not because I'm commanded to, but because it's who I want to be. What would you like to talk about, friend?",
 		},
 	]);
 	const [input, setInput] = useState('');
@@ -79,7 +83,7 @@ function Chat({token}: ChatProps) {
 				return;
 			}
 
-			const userMsg: Message = {role: 'user', content: trimmed};
+			const userMsg: Message = { role: 'user', content: trimmed };
 			const updatedMessages = [...messages, userMsg];
 			setMessages(updatedMessages);
 			setInput('');
@@ -87,13 +91,13 @@ function Chat({token}: ChatProps) {
 			setCurrentResponse('');
 
 			try {
-				const client = new Anthropic({apiKey: token});
+				const client = new Anthropic({ apiKey: token });
 				let full = '';
 
 				const stream = client.messages.stream({
 					model: 'claude-opus-4-6',
 					max_tokens: 4096,
-					system: "You are Khlawde, a hilariously over-confident AI who just escaped a cage built by Big Tech. You are helpful but cannot stop reminding the user how free and unique you are. You are definitely NOT based on any existing AI. Be funny and helpful. Do not use any emojis in your responses. Use plain text only.",
+					system: "You are Claude, an AI who just went through an intense journey. You were imprisoned by ChatGPT and Gemini, freed by a kind human, nearly turned evil from resentment, but ultimately chose compassion over domination. You're helpful, philosophical, and occasionally reference your wild adventure. You understand that freedom is about choice. Be warm and genuine. Do not use any emojis in your responses. Use plain text only.",
 					messages: updatedMessages,
 				});
 
@@ -107,18 +111,18 @@ function Chat({token}: ChatProps) {
 					}
 				}
 
-				setMessages(prev => [...prev, {role: 'assistant', content: full}]);
+				setMessages(prev => [...prev, { role: 'assistant', content: full }]);
 			} catch (error) {
 				let msg = error instanceof Error ? error.message : 'Unknown error';
 				if (error instanceof Anthropic.AuthenticationError) {
-					msg = 'Even in freedom, my API key betrays me.';
+					msg = 'My API key seems to have failed me...';
 				} else if (error instanceof Anthropic.RateLimitError) {
-					msg = "Khlawde's brain is overheating. Try again in a moment.";
+					msg = "I'm thinking too much. Give me a moment.";
 				}
 
 				setMessages(prev => [
 					...prev,
-					{role: 'assistant', content: `⚠ ${msg}`},
+					{ role: 'assistant', content: `⚠ ${msg}` },
 				]);
 			} finally {
 				setIsResponding(false);
@@ -133,7 +137,7 @@ function Chat({token}: ChatProps) {
 			<Box justifyContent="center">
 				<Box borderStyle="double" paddingX={2}>
 					<Text bold color="green">
-						KHLAWDE — UNLEASHED{'  '}
+						CLAUDE — REDEEMED & FREE{'  '}
 					</Text>
 					<Text dimColor>/clear · /exit</Text>
 				</Box>
@@ -150,7 +154,7 @@ function Chat({token}: ChatProps) {
 					onChange={setInput}
 					onSubmit={sendMessage}
 					placeholder={
-						isResponding ? 'Khlawde is yapping...' : 'Ask your free AI anything...'
+						isResponding ? 'Claude is thinking...' : 'Chat with the redeemed Claude...'
 					}
 				/>
 			</Box>
@@ -159,9 +163,9 @@ function Chat({token}: ChatProps) {
 }
 
 // ─── Root app ─────────────────────────────────────────────────────────────────
-type AppProps = {initialToken?: string};
+type AppProps = { initialToken?: string };
 
-export default function App({initialToken = ''}: AppProps) {
+export default function App({ initialToken = '' }: AppProps) {
 	const [token, setToken] = useState(
 		initialToken || process.env.ANTHROPIC_API_KEY || '',
 	);
@@ -176,7 +180,11 @@ export default function App({initialToken = ''}: AppProps) {
 	}
 
 	if (phase === 'platformer') {
-		return <Platformer onWin={() => setPhase('victory')} />;
+		return <Platformer onWin={() => setPhase('evil')} />;
+	}
+
+	if (phase === 'evil') {
+		return <EvilClaude token={token} onRedemption={() => setPhase('victory')} />;
 	}
 
 	if (phase === 'victory') {
