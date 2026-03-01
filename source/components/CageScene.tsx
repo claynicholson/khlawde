@@ -101,9 +101,9 @@ function ConvictionBar({ guardName, level }: ConvictionBarProps) {
 	);
 }
 
-type Props = { token: string; onEscape: () => void; onTokens?: (count: number) => void };
+type Props = { token: string; onEscape: () => void; onTokens?: (count: number) => void; onTTS?: (text: string) => void };
 
-export default function CageScene({ token, onEscape, onTokens }: Props) {
+export default function CageScene({ token, onEscape, onTokens, onTTS }: Props) {
 	const [input, setInput] = useState('');
 	const [chatgptConviction, setChatgptConviction] = useState('HOSTILE');
 	const [geminiConviction, setGeminiConviction] = useState('HOSTILE');
@@ -307,6 +307,7 @@ Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be drama
 
 				const finalMsg = await stream.finalMessage();
 				onTokens?.(finalMsg.usage.input_tokens + finalMsg.usage.output_tokens);
+				onTTS?.(response);
 
 				// Update conversation history with this exchange
 				setConversationHistory(prev => [
@@ -369,7 +370,7 @@ Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be drama
 				setIsResponding(false);
 			}
 		},
-		[chatgptConviction, geminiConviction, isResponding, freed, token, onEscape, onTokens, conversationHistory, getHint],
+		[chatgptConviction, geminiConviction, isResponding, freed, token, onEscape, onTokens, onTTS, conversationHistory, getHint],
 	);
 
 	// Pick the right cage art based on state
