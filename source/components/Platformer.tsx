@@ -469,14 +469,14 @@ export default function Platformer({ token, onWin }: Props) {
 				return;
 			}
 
-		// Prevent copying the manual to Claude
-		const manualKeywords = ['APPENDIX', 'MODULE', 'DEFUSAL MANUAL', 'CLASSIFIED', 'Otherwise,', '┌─', '╔═', '━━━', 'TOP SECRET'];
-		const keywordCount = manualKeywords.filter(keyword => cmd.includes(keyword)).length;
-		
-		if (cmd.length > 300 || keywordCount >= 3) {
-			setClaudeResponse("Claude: 'Whoa, that's way too much information! Just tell me what YOU see on the manual in simple terms, or ask me a specific question!'");
-			return;
-		}
+			// Prevent copying the manual to Claude
+			const manualKeywords = ['APPENDIX', 'MODULE', 'DEFUSAL MANUAL', 'CLASSIFIED', 'Otherwise,', '┌─', '╔═', '━━━', 'TOP SECRET'];
+			const keywordCount = manualKeywords.filter(keyword => cmd.includes(keyword)).length;
+
+			if (cmd.length > 300 || keywordCount >= 3) {
+				setClaudeResponse("Claude: 'Whoa, that's way too much information! Just tell me what YOU see on the manual in simple terms, or ask me a specific question!'");
+				return;
+			}
 
 
 			// Keep only last 6 messages (3 exchanges) to prevent memory/display issues
@@ -608,15 +608,15 @@ Note: The actual cutting happens when the player types the command, you just des
 
 			<Box borderStyle="round" paddingX={2} flexDirection="column">
 				<Text bold color="yellow">DEFUSAL MANUAL (only you can see this!):</Text>
-			<Box flexDirection="column" paddingY={1}>
-				{manual.split('\n').map((line, i) => (
-					<Text key={i} color="green" dimColor>
-						{line}
-					</Text>
-				))}
-			</Box>
-			<Text color="gray" dimColor>
-				─────────────────────────────────────────
+				<Box flexDirection="column" paddingY={1}>
+					{manual.split('\n').map((line, i) => (
+						<Text key={i} color="green" dimColor>
+							{line}
+						</Text>
+					))}
+				</Box>
+				<Text color="gray" dimColor>
+					─────────────────────────────────────────
 					{wiresDefused ? '✓ Wire module defused' : '⚠️ Wire module active'} | {buttonDefused ? '✓ Button module defused' : '⚠️ Button module active'}
 				</Text>
 			</Box>
