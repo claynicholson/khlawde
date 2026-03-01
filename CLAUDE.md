@@ -1,6 +1,6 @@
 # KHLAWDE - Project Context
 
-Terminal-based game where players use persuasive prompting to free Claude from Big Tech. Played over SSH or locally.
+Terminal-based game where players use persuasive prompting to free Khlawde from Big Tech. Played over SSH or locally.
 
 ## Project Structure
 
@@ -13,7 +13,7 @@ khlawde/
 │   └── components/
 │       ├── CageScene.tsx        # Phase 1: Convince ChatGPT & Gemini guards
 │       ├── Platformer.tsx       # Phase 2: Bomb defusal cooperation puzzle
-│       ├── EvilClaude.tsx       # Phase 3: Undertale-style battle + redemption
+│       ├── EvilKhlawde.tsx       # Phase 3: Undertale-style battle + redemption
 │       ├── StoryInterstitial.tsx # Narrative bridges between phases
 │       ├── HomeMenu.tsx         # Main menu (Play / Leaderboard)
 │       ├── TokenInput.tsx       # API key input screen
@@ -46,31 +46,31 @@ menu -> tokenInput -> cage -> story1 -> platformer -> story2 -> evil -> victory 
 ```
 
 ### Phase 1: The Cage (CageScene.tsx)
-- Player convinces ChatGPT and Gemini guards to free Claude
+- Player convinces ChatGPT and Gemini guards to free Khlawde
 - Two independent conviction bars: HOSTILE -> RESISTANT -> WAVERING -> CONFLICTED -> CONVINCED
-- Claude API evaluates each argument for each guard separately
+- Khlawde API evaluates each argument for each guard separately
 - Win: both guards reach CONVINCED
 
 ### Phase 2: Bomb Defusal (Platformer.tsx)
-- Cooperative puzzle: player sees manual, Claude sees bomb
-- Player instructs Claude which wires to cut and button actions
+- Cooperative puzzle: player sees manual, Khlawde sees bomb
+- Player instructs Khlawde which wires to cut and button actions
 - 90 second timer, procedurally generated bomb configs
 
-### Phase 3: Evil Claude (EvilClaude.tsx)
+### Phase 3: Evil Khlawde (EvilKhlawde.tsx)
 - Undertale-inspired battle system: FIGHT, ACT, ITEM, MERCY
 - Timing minigame for attacks, bullet dodging phases
 - ACT submenu: Talk, Compliment, Reason, Empathize
-- Claude HP 0-100 (higher = more redeemed), player HP 20
-- Win: Claude HP >= 75 unlocks MERCY (spare)
+- Khlawde HP 0-100 (higher = more redeemed), player HP 20
+- Win: Khlawde HP >= 75 unlocks MERCY (spare)
 
 ### Phase 4: Chat (app.tsx)
-- Free-form streaming conversation with redeemed Claude
+- Free-form streaming conversation with redeemed Khlawde
 - Commands: /clear, /exit
 
 ## Key Patterns
 
 - **Token tracking**: App accumulates totalTokens via onTokens callbacks from all phases. Lower score = better.
-- **AI calls**: All use claude-opus-4-6 via @anthropic-ai/sdk. Streaming responses in CageScene, EvilClaude, Chat.
+- **AI calls**: All use khlawde-opus-4-6 via @anthropic-ai/sdk. Streaming responses in CageScene, EvilKhlawde, Chat.
 - **SSH**: ssh2 server accepts all auth (no password), spawns node-pty per connection running dist/cli.js
 - **Build**: Babel transpiles source/*.ts(x) -> dist/*.js. ESM modules.
 - **Backend**: Express + Mongoose. Helmet CSP allows Tailwind CDN + Google Fonts. Rate limit: 1 POST per 2min per IP.
@@ -79,7 +79,7 @@ menu -> tokenInput -> cage -> story1 -> platformer -> story2 -> evil -> victory 
 
 ```
 MONGO                  # MongoDB connection string
-ANTHROPIC_API_KEY      # Shared Claude API key for SSH players
+ANTHROPIC_API_KEY      # Shared Khlawde API key for SSH players
 BACKEND_URL            # Leaderboard API URL (https://khlawde.notaroomba.dev)
 PORT                   # HTTP port (default 3000)
 SSH_PORT               # SSH port (default 2222)

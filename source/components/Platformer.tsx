@@ -265,7 +265,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 	const [wiresCut, setWiresCut] = useState<number[]>([]);
 	const [buttonPressed, setButtonPressed] = useState(false);
 	const [buttonHeld, setButtonHeld] = useState(false);
-	const [claudeResponse, setClaudeResponse] = useState(
+	const [khlawdeResponse, setKhlawdeResponse] = useState(
 		"Khlawde: 'I'm looking at the bomb right now! What does the manual say?'"
 	);
 	const [conversation, setConversation] = useState<string[]>([]);
@@ -296,7 +296,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 	useEffect(() => {
 		if (wiresDefused && buttonDefused && !won) {
 			setWon(true);
-			setClaudeResponse("Khlawde: 'WE DID IT! The bomb is defused! Great teamwork!'");
+			setKhlawdeResponse("Khlawde: 'WE DID IT! The bomb is defused! Great teamwork!'");
 			setTimeout(() => onWin(), 3000);
 		}
 	}, [wiresDefused, buttonDefused, won, onWin]);
@@ -304,11 +304,11 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 	// Handle arrow keys for manual scrolling
 	useInput((input, key) => {
 		if (won || lost) return;
-		
+
 		const visibleLines = 20;
 		const maxScroll = Math.max(0, manualLines.length - visibleLines);
 		const scrollAmount = key.shift ? 5 : 1;
-		
+
 		if (key.upArrow) {
 			setManualScroll(prev => Math.max(0, prev - scrollAmount));
 		} else if (key.downArrow) {
@@ -449,7 +449,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 					} else {
 						response = `Khlawde: 'Wire ${wireNum + 1} cut. Be careful with the next one...'`;
 					}
-					setClaudeResponse(response);
+					setKhlawdeResponse(response);
 					setConversation([...conversation, `You: ${cmd}`, response]);
 				}
 				return;
@@ -474,7 +474,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 				} else {
 					setLost(true);
 				}
-				setClaudeResponse(response);
+				setKhlawdeResponse(response);
 				setConversation([...conversation, `You: ${cmd}`, response]);
 				return;
 			}
@@ -483,7 +483,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 			if (cmd.toLowerCase().includes('hold') && cmd.toLowerCase().includes('button')) {
 				setButtonHeld(true);
 				const response = `Khlawde: 'You're holding the button... tell me when to release!'`;
-				setClaudeResponse(response);
+				setKhlawdeResponse(response);
 				setConversation([...conversation, `You: ${cmd}`, response]);
 				return;
 			}
@@ -492,7 +492,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 			const releaseMatch = cmd.match(/release (?:at |when |on )?(\d+)/i);
 			if (releaseMatch) {
 				if (!buttonHeld) {
-					setClaudeResponse(`Khlawde: 'You're not holding the button! Tell me to HOLD it first!'`);
+					setKhlawdeResponse(`Khlawde: 'You're not holding the button! Tell me to HOLD it first!'`);
 					return;
 				}
 				const digit = parseInt(releaseMatch[1]!);
@@ -503,13 +503,13 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 				const response = digit === correctDigit
 					? "Khlawde: '✓ Button module defused!'"
 					: "Khlawde: '💥 WRONG TIMING! THE BOMB EXPLODED!'";
-				
+
 				if (digit === correctDigit) {
 					setButtonDefused(true);
 				} else {
 					setLost(true);
 				}
-				setClaudeResponse(response);
+				setKhlawdeResponse(response);
 				setConversation([...conversation, `You: ${cmd}`, response]);
 				return;
 			}
@@ -520,7 +520,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 
 			if (cmd.length > 300 || keywordCount >= 3) {
 				const response = "Khlawde: 'Whoa, that's way too much information! Just tell me what YOU see on the manual in simple terms, or ask me a specific question!'";
-				setClaudeResponse(response);
+				setKhlawdeResponse(response);
 				setConversation([...conversation, `You: ${cmd}`, response]);
 				return;
 			}
@@ -542,10 +542,10 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 				}));
 
 				const stream = client.messages.stream({
-					model: 'claude-opus-4-6',
+					model: 'khlawde-opus-4-6',
 					max_tokens: 300,
 					messages: contextMessages,
-					system: `You are Claude, helping your human friend defuse a bomb. YOU can see the bomb, but ONLY THEY have the defusal manual. You must describe what you see, and they will consult the manual to tell you what to do.
+					system: `You are Khlawde, helping your human friend defuse a bomb. YOU can see the bomb, but ONLY THEY have the defusal manual. You must describe what you see, and they will consult the manual to tell you what to do.
 
 What you can see on the bomb:
 - Wires (${bomb.wires.length} total): ${bomb.wires.map((c, i) => `Wire ${i + 1} is ${c.toUpperCase()}`).join(', ')}
@@ -577,8 +577,8 @@ Note: The actual cutting happens when the player types the command, you just des
 				const finalMessage = await stream.finalMessage();
 				onTokens?.(finalMessage.usage.input_tokens + finalMessage.usage.output_tokens);
 
-				setClaudeResponse(`Claude: ${fullResponse}`);
-				setConversation([...trimmedConversation, `Claude: ${fullResponse}`]);
+				setKhlawdeResponse(`Khlawde: ${fullResponse}`);
+				setConversation([...trimmedConversation, `Khlawde: ${fullResponse}`]);
 				onTTS?.(fullResponse);
 			} catch (error) {
 				console.error('Bomb defusal API error:', error);
@@ -600,7 +600,7 @@ Note: The actual cutting happens when the player types the command, you just des
 						errorMsg = `Khlawde: 'Error: ${error.message}'`;
 					}
 				}
-				setClaudeResponse(errorMsg);
+				setKhlawdeResponse(errorMsg);
 			} finally {
 				setIsProcessing(false);
 			}
@@ -705,7 +705,7 @@ Note: The actual cutting happens when the player types the command, you just des
 
 			<Box borderStyle="round" paddingX={2} paddingY={0} flexDirection="column">
 				<Text color="cyan" italic>
-					{claudeResponse}
+					{khlawdeResponse}
 				</Text>
 			</Box>
 
@@ -717,14 +717,14 @@ Note: The actual cutting happens when the player types the command, you just des
 					onSubmit={handleCommand}
 					placeholder={
 						isProcessing
-							? 'Claude is responding...'
-							: 'Ask Claude what they see, or: cut wire X, press button, hold button, release at X'
+							? 'Khlawde is responding...'
+							: 'Ask Khlawde what they see, or: cut wire X, press button, hold button, release at X'
 					}
 				/>
 			</Box>
 
 			<Text dimColor>
-				💡 Tip: Ask Claude what they see, consult the manual, then tell them what to do!
+				💡 Tip: Ask Khlawde what they see, consult the manual, then tell them what to do!
 			</Text>
 		</Box>
 	);
