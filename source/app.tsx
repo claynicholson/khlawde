@@ -180,7 +180,7 @@ export default function App({ initialToken = '' }: AppProps) {
 	}
 
 	if (phase === 'platformer') {
-		return <Platformer onWin={() => setPhase('evil')} />;
+		return <Platformer token={token} onWin={() => setPhase('evil')} />;
 	}
 
 	if (phase === 'evil') {
