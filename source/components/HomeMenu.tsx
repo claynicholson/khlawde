@@ -6,7 +6,7 @@ type Props = {
 };
 
 const OPTIONS = [
-	{ key: 'play' as const, label: 'Play Game', desc: 'Free Claude from Big Tech' },
+	{ key: 'play' as const, label: 'Play Game', desc: 'Free Khlawde from Big Tech' },
 	{ key: 'leaderboard' as const, label: 'Leaderboard', desc: 'View the global leaderboard' },
 ];
 

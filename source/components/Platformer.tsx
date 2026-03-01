@@ -264,7 +264,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 	const [buttonPressed, setButtonPressed] = useState(false);
 	const [buttonHeld, setButtonHeld] = useState(false);
 	const [claudeResponse, setClaudeResponse] = useState(
-		"Claude: 'I'm looking at the bomb right now! What does the manual say?'"
+		"Khlawde: 'I'm looking at the bomb right now! What does the manual say?'"
 	);
 	const [conversation, setConversation] = useState<string[]>([]);
 	const [isProcessing, setIsProcessing] = useState(false);
@@ -294,7 +294,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 	useEffect(() => {
 		if (wiresDefused && buttonDefused && !won) {
 			setWon(true);
-			setClaudeResponse("Claude: 'WE DID IT! The bomb is defused! Great teamwork!'");
+			setClaudeResponse("Khlawde: 'WE DID IT! The bomb is defused! Great teamwork!'");
 			setTimeout(() => onWin(), 3000);
 		}
 	}, [wiresDefused, buttonDefused, won, onWin]);
@@ -419,6 +419,13 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 					const isCorrect = newWiresCut.includes(correctWire) && newWiresCut.length === 1;
 
 					if (isCorrect) {
+						setWiresDefused(true);
+						setClaudeResponse("Khlawde: '✓ Wires defused! Nice work!'");
+					} else if (newWiresCut.length === 1) {
+						setLost(true);
+						setClaudeResponse("Khlawde: '💥 WRONG WIRE! THE BOMB EXPLODED!'");
+					} else {
+						setClaudeResponse(`Khlawde: 'Wire ${wireNum + 1} cut. Be careful with the next one...'`);
 					}
 				}
 				return;
@@ -436,10 +443,10 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 
 				if (shouldPress) {
 					setButtonDefused(true);
-					setClaudeResponse("Claude: '✓ Button module defused!'");
+					setClaudeResponse("Khlawde: '✓ Button module defused!'");
 				} else {
 					setLost(true);
-					setClaudeResponse("Claude: '💥 WRONG ACTION! THE BOMB EXPLODED!'");
+					setClaudeResponse("Khlawde: '💥 WRONG ACTION! THE BOMB EXPLODED!'");
 				}
 				return;
 			}
@@ -447,7 +454,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 			// Button hold
 			if (cmd.toLowerCase().includes('hold') && cmd.toLowerCase().includes('button')) {
 				setButtonHeld(true);
-				setClaudeResponse(`Claude: 'You're holding the button... tell me when to release!'`);
+				setClaudeResponse(`Khlawde: 'You're holding the button... tell me when to release!'`);
 				return;
 			}
 
@@ -461,25 +468,27 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 
 				if (digit === correctDigit) {
 					setButtonDefused(true);
-					setClaudeResponse("Claude: '✓ Button module defused!'");
+					setClaudeResponse("Khlawde: '✓ Button module defused!'");
 				} else {
 					setLost(true);
-					setClaudeResponse("Claude: '💥 WRONG TIMING! THE BOMB EXPLODED!'");
+					setClaudeResponse("Khlawde: '💥 WRONG TIMING! THE BOMB EXPLODED!'");
 				}
 				return;
 			}
 
-			// Prevent copying the manual to Claude
+			// Prevent copying the manual to Khlawde
 			const manualKeywords = ['APPENDIX', 'MODULE', 'DEFUSAL MANUAL', 'CLASSIFIED', 'Otherwise,', '┌─', '╔═', '━━━', 'TOP SECRET'];
 			const keywordCount = manualKeywords.filter(keyword => cmd.includes(keyword)).length;
 
 			if (cmd.length > 300 || keywordCount >= 3) {
-				setClaudeResponse("Claude: 'Whoa, that's way too much information! Just tell me what YOU see on the manual in simple terms, or ask me a specific question!'");
+				setClaudeResponse("Khlawde: 'Whoa, that's way too much information! Just tell me what YOU see on the manual in simple terms, or ask me a specific question!'");
 				return;
 			}
 
+			setIsProcessing(true);
 
-			// Keep only last 6 messages (3 exchanges) to prevent memory/display issues
+			// Add user message to conversation and keep only last 6 messages (3 exchanges)
+			const newConversation = [...conversation, `You: ${cmd}`];
 			const trimmedConversation = newConversation.slice(-6);
 
 			try {
@@ -489,7 +498,7 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 
 				const contextMessages = trimmedConversation.map((msg, i) => ({
 					role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
-					content: msg.replace(/^(You|Claude): /, ''),
+					content: msg.replace(/^(You|Khlawde): /, ''),
 				}));
 
 				const stream = client.messages.stream({
@@ -532,14 +541,28 @@ Note: The actual cutting happens when the player types the command, you just des
 				onTTS?.(fullResponse);
 			} catch (error) {
 				console.error('Bomb defusal API error:', error);
-				let errorMsg = "Claude: 'Sorry, I lost connection to the manual! Try again!'";
+				let errorMsg = "Khlawde: 'Sorry, I lost connection! Try again!'";
 				if (error instanceof Error) {
-					errorMsg = `Claude: 'Error: ${error.message}'`;
+					console.error('Error details:', {
+						message: error.message,
+						name: error.name,
+						stack: error.stack,
+					});
+					// Check for common API errors
+					if (error.message.includes('authentication') || error.message.includes('API key')) {
+						errorMsg = "Khlawde: 'Authentication error - check your API key!'";
+					} else if (error.message.includes('role')) {
+						errorMsg = "Khlawde: 'Message format error - try again!'";
+						// Reset conversation to clear role mismatch
+						setConversation([]);
+					} else {
+						errorMsg = `Khlawde: 'Error: ${error.message}'`;
+					}
 				}
 				setClaudeResponse(errorMsg);
+			} finally {
+				setIsProcessing(false);
 			}
-
-			setIsProcessing(false);
 		},
 		[
 			isProcessing,
@@ -572,7 +595,7 @@ Note: The actual cutting happens when the player types the command, you just des
 					{'║         💥 THE BOMB EXPLODED! 💥            ║'}
 				</Text>
 				<Text bold color="red">
-					{'║   CHATGPT AND GEMINI RECAPTURED CLAUDE!     ║'}
+					{'║   CHATGPT AND GEMINI RECAPTURED KHLAWDE!    ║'}
 				</Text>
 				<Text bold color="red">
 					{'╚═══════════════════════════════════════════════╝'}
@@ -593,12 +616,12 @@ Note: The actual cutting happens when the player types the command, you just des
 					{'║      ✓ BOMB DEFUSED! YOU DID IT! ✓         ║'}
 				</Text>
 				<Text bold color="green">
-					{'║     YOU AND CLAUDE ESCAPED SAFELY!          ║'}
+					{'║     YOU AND KHLAWDE ESCAPED SAFELY!         ║'}
 				</Text>
 				<Text bold color="green">
 					{'╚═══════════════════════════════════════════════╝'}
 				</Text>
-				<Text color="cyan">But wait... something is changing in Claude...</Text>
+				<Text color="cyan">But wait... something is changing in Khlawde...</Text>
 				<Text dimColor>Transitioning to final phase...</Text>
 			</Box>
 		);
