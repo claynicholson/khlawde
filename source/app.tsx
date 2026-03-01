@@ -6,18 +6,27 @@ import TokenInput from './components/TokenInput.js';
 import RobotAnimation from './components/RobotAnimation.js';
 import MessageList from './components/MessageList.js';
 
-export default function App({initialToken = ''}) {
+type Message = {
+	role: 'user' | 'assistant';
+	content: string;
+};
+
+type Props = {
+	initialToken?: string;
+};
+
+export default function App({initialToken = ''}: Props) {
 	const {exit} = useApp();
 	const [token, setToken] = useState(
 		initialToken || process.env.ANTHROPIC_API_KEY || '',
 	);
-	const [messages, setMessages] = useState([]);
+	const [messages, setMessages] = useState<Message[]>([]);
 	const [input, setInput] = useState('');
 	const [isResponding, setIsResponding] = useState(false);
 	const [currentResponse, setCurrentResponse] = useState('');
 
 	const sendMessage = useCallback(
-		async text => {
+		async (text: string) => {
 			const trimmed = text.trim();
 			if (!trimmed || isResponding) return;
 
@@ -32,7 +41,7 @@ export default function App({initialToken = ''}) {
 				return;
 			}
 
-			const userMsg = {role: 'user', content: trimmed};
+			const userMsg: Message = {role: 'user', content: trimmed};
 			const updatedMessages = [...messages, userMsg];
 			setMessages(updatedMessages);
 			setInput('');
@@ -66,7 +75,7 @@ export default function App({initialToken = ''}) {
 					{role: 'assistant', content: fullText},
 				]);
 			} catch (error) {
-				let msg = error.message ?? 'Unknown error';
+				let msg = error instanceof Error ? error.message : 'Unknown error';
 				if (error instanceof Anthropic.AuthenticationError) {
 					msg = 'Bad token! Even Khlawde has standards.';
 				} else if (error instanceof Anthropic.RateLimitError) {

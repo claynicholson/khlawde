@@ -77,7 +77,11 @@ const YAPPING_QUIPS = [
 	'"calculating the vibes..."',
 ];
 
-export default function RobotAnimation({isAnimating}) {
+type Props = {
+	isAnimating: boolean;
+};
+
+export default function RobotAnimation({isAnimating}: Props) {
 	const [frameIndex, setFrameIndex] = useState(0);
 	const [quipIndex, setQuipIndex] = useState(0);
 

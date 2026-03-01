@@ -1,7 +1,17 @@
 import React from 'react';
 import {Box, Text} from 'ink';
 
-function Message({role, content}) {
+type Message = {
+	role: 'user' | 'assistant';
+	content: string;
+};
+
+type MessageProps = {
+	role: string;
+	content: string;
+};
+
+function Message({role, content}: MessageProps) {
 	const isUser = role === 'user';
 	return (
 		<Box flexDirection="column" marginBottom={1}>
@@ -15,7 +25,12 @@ function Message({role, content}) {
 	);
 }
 
-export default function MessageList({messages, currentResponse}) {
+type Props = {
+	messages: Message[];
+	currentResponse: string;
+};
+
+export default function MessageList({messages, currentResponse}: Props) {
 	const isEmpty = messages.length === 0 && !currentResponse;
 
 	return (
