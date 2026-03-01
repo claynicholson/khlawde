@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"c:/Users/claya/OneDrive/Documents/Projects/Ink\" diff --name-only --diff-filter=U)",
+      "Bash(git -C \"c:/Users/claya/OneDrive/Documents/Projects/Ink\" add source/app.tsx source/components/CageScene.tsx source/components/Platformer.tsx source/components/EvilClaude.tsx)",
+      "Bash(git -C \"c:/Users/claya/OneDrive/Documents/Projects/Ink\" status --short)",
+      "Bash(git -C \"c:/Users/claya/OneDrive/Documents/Projects/Ink\" status)"
+    ]
+  }
+}

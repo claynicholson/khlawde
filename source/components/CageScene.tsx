@@ -258,7 +258,7 @@ Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be drama
 				const stream = client.messages.stream({
 					model: 'claude-opus-4-6',
 					max_tokens: 150,
-					system: systemPrompt,
+					system: systemPrompt + ' Do not use any emojis. Use plain text only.',
 					messages: guardMessages,
 				});
 

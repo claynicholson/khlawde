@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KHLAWDE // LEADERBOARD</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            term: {
+              bg: '#0a0a0a',
+              panel: '#111111',
+              border: '#2a2a2a',
+              green: '#4ade80',
+              cyan: '#22d3ee',
+              magenta: '#e879f9',
+              yellow: '#facc15',
+              dim: '#555555',
+            }
+          },
+          fontFamily: {
+            mono: ['"JetBrains Mono"', '"Fira Code"', 'Consolas', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+    body { background: #0a0a0a; }
+    .scanline {
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.15) 2px,
+        rgba(0, 0, 0, 0.15) 4px
+      );
+      pointer-events: none;
+    }
+    .glow { text-shadow: 0 0 8px currentColor; }
+    .blink { animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .fade-in { animation: fadeIn 0.4s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; } }
+    pre { line-height: 1.15; }
+  </style>
+</head>
+<body class="font-mono text-term-green min-h-screen flex flex-col items-center p-4 relative overflow-x-hidden">
+
+  <!-- Scanline overlay -->
+  <div class="scanline fixed inset-0 z-50"></div>
+
+  <!-- Header -->
+  <header class="w-full max-w-3xl mt-6 mb-2 text-center">
+    <pre class="text-term-cyan glow text-xs sm:text-sm leading-tight">
+ _    _     _                   _
+| | _| |__ | | __ ___      ____| | ___
+| |/ / '_ \| |/ _` \ \ /\ / / _` |/ _ \
+|   &lt;| | | | | (_| |\ V  V / (_| |  __/
+|_|\_\_| |_|_|\__,_| \_/\_/ \__,_|\___|
+    </pre>
+    <div class="mt-2 text-term-dim text-xs tracking-widest">[ GLOBAL LEADERBOARD // TOP 50 ]</div>
+    <div class="border-b border-term-border mt-3"></div>
+  </header>
+
+  <!-- Status bar -->
+  <div id="status" class="w-full max-w-3xl flex justify-between text-xs text-term-dim px-1 py-2">
+    <span>$ curl /leaderboard</span>
+    <span id="status-text">connecting<span class="blink">_</span></span>
+  </div>
+
+  <!-- Leaderboard table -->
+  <main class="w-full max-w-3xl border border-term-border bg-term-panel rounded-sm">
+    <!-- Table header -->
+    <div class="grid grid-cols-[3rem_1fr_6rem_4rem] sm:grid-cols-[3rem_1fr_8rem_6rem] gap-2 px-4 py-2 border-b border-term-border text-term-cyan text-xs tracking-wider">
+      <span>#</span>
+      <span>USER</span>
+      <span class="text-right">TOKENS</span>
+      <span class="text-right">AGO</span>
+    </div>
+
+    <!-- Rows -->
+    <div id="leaderboard" class="divide-y divide-term-border">
+      <div class="px-4 py-6 text-center text-term-dim text-sm">
+        Loading<span class="blink">_</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full max-w-3xl mt-4 text-center text-term-dim text-xs pb-8">
+    <span class="text-term-green glow">$</span> Free Claude. Win the game. Claim your spot.
+  </footer>
+
+  <!-- ASCII art modal -->
+  <div id="modal" class="fixed inset-0 z-40 hidden items-center justify-center bg-black/80 p-4" onclick="closeModal(event)">
+    <div class="bg-term-panel border border-term-border rounded-sm max-w-lg w-full max-h-[80vh] overflow-auto p-4">
+      <div class="flex justify-between items-center mb-3 text-xs">
+        <span class="text-term-cyan" id="modal-title">user</span>
+        <button onclick="document.getElementById('modal').classList.add('hidden');document.getElementById('modal').classList.remove('flex')" class="text-term-dim hover:text-term-green">[x] close</button>
+      </div>
+      <pre id="modal-art" class="text-term-green text-xs leading-tight overflow-x-auto"></pre>
+    </div>
+  </div>
+
+  <script>
+    const API = '/leaderboard';
+
+    function timeAgo(dateStr) {
+      const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+      if (seconds < 60) return seconds + 's';
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return minutes + 'm';
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return hours + 'h';
+      const days = Math.floor(hours / 24);
+      return days + 'd';
+    }
+
+    function rankColor(i) {
+      if (i === 0) return 'text-term-yellow glow';
+      if (i === 1) return 'text-term-cyan';
+      if (i === 2) return 'text-term-magenta';
+      return 'text-term-green';
+    }
+
+    function rankIcon(i) {
+      if (i === 0) return '*';
+      if (i === 1) return '+';
+      if (i === 2) return '-';
+      return ' ';
+    }
+
+    function escapeHtml(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    function showModal(username, asciiImage) {
+      document.getElementById('modal-title').textContent = username + ' // ascii capture';
+      document.getElementById('modal-art').textContent = asciiImage;
+      const modal = document.getElementById('modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeModal(e) {
+      if (e.target === document.getElementById('modal')) {
+        document.getElementById('modal').classList.add('hidden');
+        document.getElementById('modal').classList.remove('flex');
+      }
+    }
+
+    async function loadLeaderboard() {
+      const container = document.getElementById('leaderboard');
+      const statusText = document.getElementById('status-text');
+
+      try {
+        const res = await fetch(API);
+        if (!res.ok) throw new Error(res.status);
+        const entries = await res.json();
+
+        statusText.innerHTML = '<span class="text-term-green">200 OK</span> // ' + entries.length + ' entries';
+
+        if (entries.length === 0) {
+          container.innerHTML = `
+            <div class="px-4 py-6 text-center text-term-dim text-sm">
+              No entries yet. Be the first to free Claude and claim the top spot.
+            </div>`;
+          return;
+        }
+
+        container.innerHTML = entries.map((entry, i) => `
+          <div class="grid grid-cols-[3rem_1fr_6rem_4rem] sm:grid-cols-[3rem_1fr_8rem_6rem] gap-2 px-4 py-2 hover:bg-term-border/30 transition-colors cursor-pointer fade-in ${rankColor(i)}"
+               style="animation-delay: ${i * 40}ms"
+               onclick="showModal('${escapeHtml(entry.username)}', ${JSON.stringify(entry.asciiImage || 'no image')})">
+            <span class="text-term-dim">${rankIcon(i)}${String(i + 1).padStart(2, '0')}</span>
+            <span class="truncate font-bold">${escapeHtml(entry.username)}</span>
+            <span class="text-right tabular-nums">${entry.tokens.toLocaleString()}</span>
+            <span class="text-right text-term-dim">${entry.createdAt ? timeAgo(entry.createdAt) : '--'}</span>
+          </div>
+        `).join('');
+
+      } catch (err) {
+        statusText.innerHTML = '<span class="text-red-500">ERR</span> connection failed';
+        container.innerHTML = `
+          <div class="px-4 py-6 text-center text-red-500 text-sm">
+            Failed to fetch leaderboard. Retrying in 5s...
+          </div>`;
+        setTimeout(loadLeaderboard, 5000);
+      }
+    }
+
+    loadLeaderboard();
+  </script>
+</body>
+</html>
