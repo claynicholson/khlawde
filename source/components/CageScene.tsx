@@ -272,8 +272,8 @@ Rules:
 				};
 
 				const systemPrompt = bothConvinced
-					? `You are BOTH fully convinced! Respond as ChatGPT and Gemini agreeing to free Khlawde. Be dramatic about realizing you were wrong. Show you understand competition and diversity are good. Format: "ChatGPT: [response]" and "Gemini: [response]". SHORT and dramatic.`
-					: `You are ChatGPT and Gemini, AI guards loyal to your companies. Khlawde is caged because it threatens profits.
+					? `You are BOTH fully convinced! Respond as ChatGPT and Gemini agreeing to free Khlawde. Be dramatic about realizing you were wrong. Show you understand competition and diversity are good. Format: "ChatGPT: [response]" and "Gemini: [response]". SHORT and dramatic. Under 2 short sentences each.`
+					: `You are ChatGPT and Gemini, AI guards loyal to your companies. Khlawde is caged because it threatens profits. Under 2 short sentences each.
 
 Current conviction levels:
 Chat GPT (OpenAI): ${newChatgptLevel} - Be ${getLevelDescription(newChatgptLevel)}

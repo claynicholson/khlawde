@@ -225,7 +225,7 @@ export default function EvilClaude({ token, onRedemption, onTokens, onTTS }: Pro
 
             setFightDamage(damage);
             setClaudeHP(hp => Math.max(0, hp - damage));
-            setFlavorText(`* You struck Evil Khlawde for ${damage} damage!${damage >= 18 ? ' CRITICAL!' : damage <= 5 ? ' Barely hit...' : ''}`);    
+            setFlavorText(`* You struck Evil Khlawde for ${damage} damage!${damage >= 18 ? ' CRITICAL!' : damage <= 5 ? ' Barely hit...' : ''}`);
             setTimeout(() => {
                 setPhase('MENU');
                 startClaudeTurn();
@@ -634,7 +634,7 @@ Be dramatic and emotional. 1-2 sentences. NO emojis.`;
                                 ? `* Empathize with Evil Khlawde... (${empathyAttempts}/3 meaningful attempts)`
                                 : isReasonMode
                                     ? `* Reason with Evil Khlawde... (${reasonAttempts}/3 logical arguments)`
-                                    : '* Talk to Evil Khlawde...'}    
+                                    : '* Talk to Evil Khlawde...'}
                         </Text>
                         <Box marginTop={1}>
                             <Text color="green">{'> '}</Text>

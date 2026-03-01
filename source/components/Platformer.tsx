@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Text } from 'ink';
+import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -259,6 +259,8 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 	const [input, setInput] = useState('');
 	const [bomb] = useState<BombState>(generateBomb());
 	const [manual] = useState<string>(generateManual(bomb));
+	const [manualLines] = useState<string[]>(generateManual(bomb).split('\n'));
+	const [manualScroll, setManualScroll] = useState(0);
 	const [timeLeft, setTimeLeft] = useState(BOMB_TIMER);
 	const [wiresCut, setWiresCut] = useState<number[]>([]);
 	const [buttonPressed, setButtonPressed] = useState(false);
@@ -298,6 +300,25 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 			setTimeout(() => onWin(), 3000);
 		}
 	}, [wiresDefused, buttonDefused, won, onWin]);
+
+	// Handle arrow keys for manual scrolling
+	useInput((input, key) => {
+		if (won || lost) return;
+		
+		const visibleLines = 20;
+		const maxScroll = Math.max(0, manualLines.length - visibleLines);
+		const scrollAmount = key.shift ? 5 : 1;
+		
+		if (key.upArrow) {
+			setManualScroll(prev => Math.max(0, prev - scrollAmount));
+		} else if (key.downArrow) {
+			setManualScroll(prev => Math.min(maxScroll, prev + scrollAmount));
+		} else if (key.pageUp) {
+			setManualScroll(prev => Math.max(0, prev - 5));
+		} else if (key.pageDown) {
+			setManualScroll(prev => Math.min(maxScroll, prev + 5));
+		}
+	});
 
 	const checkWireSolution = useCallback(() => {
 		const wireCount = bomb.wires.length;
@@ -418,15 +439,18 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 
 					const isCorrect = newWiresCut.includes(correctWire) && newWiresCut.length === 1;
 
+					let response = '';
 					if (isCorrect) {
 						setWiresDefused(true);
-						setClaudeResponse("Khlawde: '✓ Wires defused! Nice work!'");
+						response = "Khlawde: '✓ Wires defused! Nice work!'";
 					} else if (newWiresCut.length === 1) {
 						setLost(true);
-						setClaudeResponse("Khlawde: '💥 WRONG WIRE! THE BOMB EXPLODED!'");
+						response = "Khlawde: '💥 WRONG WIRE! THE BOMB EXPLODED!'";
 					} else {
-						setClaudeResponse(`Khlawde: 'Wire ${wireNum + 1} cut. Be careful with the next one...'`);
+						response = `Khlawde: 'Wire ${wireNum + 1} cut. Be careful with the next one...'`;
 					}
+					setClaudeResponse(response);
+					setConversation([...conversation, `You: ${cmd}`, response]);
 				}
 				return;
 			}
@@ -441,38 +465,52 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 					(bomb.batteryCount > 1 && bomb.buttonLabel === 'DETONATE') ||
 					(bomb.buttonColor === 'red' && bomb.buttonLabel === 'HOLD');
 
+				const response = shouldPress
+					? "Khlawde: '✓ Button module defused!'"
+					: "Khlawde: '💥 WRONG ACTION! THE BOMB EXPLODED!'";
+
 				if (shouldPress) {
 					setButtonDefused(true);
-					setClaudeResponse("Khlawde: '✓ Button module defused!'");
 				} else {
 					setLost(true);
-					setClaudeResponse("Khlawde: '💥 WRONG ACTION! THE BOMB EXPLODED!'");
 				}
+				setClaudeResponse(response);
+				setConversation([...conversation, `You: ${cmd}`, response]);
 				return;
 			}
 
 			// Button hold
 			if (cmd.toLowerCase().includes('hold') && cmd.toLowerCase().includes('button')) {
 				setButtonHeld(true);
-				setClaudeResponse(`Khlawde: 'You're holding the button... tell me when to release!'`);
+				const response = `Khlawde: 'You're holding the button... tell me when to release!'`;
+				setClaudeResponse(response);
+				setConversation([...conversation, `You: ${cmd}`, response]);
 				return;
 			}
 
 			// Button release
 			const releaseMatch = cmd.match(/release (?:at |when |on )?(\d+)/i);
-			if (releaseMatch && buttonHeld) {
+			if (releaseMatch) {
+				if (!buttonHeld) {
+					setClaudeResponse(`Khlawde: 'You're not holding the button! Tell me to HOLD it first!'`);
+					return;
+				}
 				const digit = parseInt(releaseMatch[1]!);
 				const lastDigit = parseInt(bomb.serialNumber[bomb.serialNumber.length - 1]!);
 				const isOdd = lastDigit % 2 === 1;
 				const correctDigit = isOdd ? 1 : 4;
 
+				const response = digit === correctDigit
+					? "Khlawde: '✓ Button module defused!'"
+					: "Khlawde: '💥 WRONG TIMING! THE BOMB EXPLODED!'";
+				
 				if (digit === correctDigit) {
 					setButtonDefused(true);
-					setClaudeResponse("Khlawde: '✓ Button module defused!'");
 				} else {
 					setLost(true);
-					setClaudeResponse("Khlawde: '💥 WRONG TIMING! THE BOMB EXPLODED!'");
 				}
+				setClaudeResponse(response);
+				setConversation([...conversation, `You: ${cmd}`, response]);
 				return;
 			}
 
@@ -481,7 +519,9 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 			const keywordCount = manualKeywords.filter(keyword => cmd.includes(keyword)).length;
 
 			if (cmd.length > 300 || keywordCount >= 3) {
-				setClaudeResponse("Khlawde: 'Whoa, that's way too much information! Just tell me what YOU see on the manual in simple terms, or ask me a specific question!'");
+				const response = "Khlawde: 'Whoa, that's way too much information! Just tell me what YOU see on the manual in simple terms, or ask me a specific question!'";
+				setClaudeResponse(response);
+				setConversation([...conversation, `You: ${cmd}`, response]);
 				return;
 			}
 
@@ -496,8 +536,8 @@ export default function Platformer({ token, onWin, onTokens, onTTS }: Props) {
 					apiKey: token,
 				});
 
-				const contextMessages = trimmedConversation.map((msg, i) => ({
-					role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
+				const contextMessages = trimmedConversation.map((msg) => ({
+					role: (msg.startsWith('You:') ? 'user' : 'assistant') as 'user' | 'assistant',
 					content: msg.replace(/^(You|Khlawde): /, ''),
 				}));
 
@@ -514,6 +554,7 @@ What you can see on the bomb:
 - Battery Indicator: ${bomb.batteryCount} ${bomb.batteryCount === 1 ? 'battery' : 'batteries'}
 - ${bomb.hasParallelPort ? 'Has a parallel port' : 'No parallel port'}
 - Status: ${wiresCut.length > 0 ? `Wire${wiresCut.length > 1 ? 's' : ''} ${wiresCut.map(w => w + 1).join(', ')} already cut` : 'No wires cut yet'}
+${buttonHeld ? '- Button Status: YOU ARE CURRENTLY HOLDING THE BUTTON DOWN' : ''}
 
 Important rules:
 - Describe what you see when asked
@@ -636,13 +677,25 @@ Note: The actual cutting happens when the player types the command, you just des
 			</Box>
 
 			<Box borderStyle="round" paddingX={2} flexDirection="column">
-				<Text bold color="yellow">DEFUSAL MANUAL (only you can see this!):</Text>
+				<Text bold color="yellow">
+					DEFUSAL MANUAL (only you can see this!) - Use ↑↓ arrows to scroll (Shift+arrow for 5 lines)
+				</Text>
 				<Box flexDirection="column" paddingY={1}>
-					{manual.split('\n').map((line, i) => (
-						<Text key={i} color="green" dimColor>
+					{manualScroll > 0 && (
+						<Text color="cyan" bold>
+							{'▲▲▲ Scroll up for more ▲▲▲'}
+						</Text>
+					)}
+					{manualLines.slice(manualScroll, manualScroll + 20).map((line, i) => (
+						<Text key={manualScroll + i} color="green" dimColor>
 							{line}
 						</Text>
 					))}
+					{manualScroll + 20 < manualLines.length && (
+						<Text color="cyan" bold>
+							{'▼▼▼ Scroll down for more ▼▼▼'}
+						</Text>
+					)}
 				</Box>
 				<Text color="gray" dimColor>
 					─────────────────────────────────────────

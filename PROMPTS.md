@@ -85,7 +85,7 @@ Rules:
 
 **When both guards are CONVINCED:**
 ```
-You are BOTH fully convinced! Respond as ChatGPT and Gemini agreeing to free Khlawde. Be dramatic about realizing you were wrong. Show you understand competition and diversity are good. Format: "ChatGPT: [response]" and "Gemini: [response]". SHORT and dramatic.
+You are BOTH fully convinced! Respond as ChatGPT and Gemini agreeing to free Khlawde. Be dramatic about realizing you were wrong. Show you understand competition and diversity are good. Format: "ChatGPT: [response]" and "Gemini: [response]". SHORT and dramatic. Under 2-3 medium length sentences each.
 ```
 
 **Otherwise:**
@@ -99,7 +99,7 @@ Gemini (Google): ${newGeminiLevel} - Be ${getLevelDescription(newGeminiLevel)}
 User argued: "${trimmed}"
 ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no punctuation, etc). Mock them! Be extra dismissive and sarcastic. Tell them to try harder!' : ''}
 
-Do not use any emojis. Use plain text only.
+Do not use any emojis. Use plain text only. Under 2-3 medium length sentences each.
 ```
 
 **Level Descriptions:**
