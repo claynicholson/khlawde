@@ -7,13 +7,16 @@ import CageScene from './components/CageScene.js';
 import Platformer from './components/Platformer.js';
 import EvilClaude from './components/EvilClaude.js';
 import MessageList from './components/MessageList.js';
+import LeaderboardSubmit from './components/LeaderboardSubmit.js';
+import HomeMenu from './components/HomeMenu.js';
+import LeaderboardView from './components/LeaderboardView.js';
 
 type Message = {
 	role: 'user' | 'assistant';
 	content: string;
 };
 
-type Phase = 'cage' | 'platformer' | 'evil' | 'victory' | 'chat';
+type Phase = 'menu' | 'viewLeaderboard' | 'tokenInput' | 'cage' | 'platformer' | 'evil' | 'victory' | 'leaderboard' | 'chat';
 
 // ─── Victory screen shown briefly after redemption ───────────────────────────
 function VictoryScreen() {
@@ -163,20 +166,45 @@ function Chat({ token }: ChatProps) {
 }
 
 // ─── Root app ─────────────────────────────────────────────────────────────────
-type AppProps = { initialToken?: string };
+type AppProps = { initialToken?: string; backendUrl?: string };
 
-export default function App({ initialToken = '' }: AppProps) {
+export default function App({ initialToken = '', backendUrl = '' }: AppProps) {
 	const [token, setToken] = useState(
 		initialToken || process.env.ANTHROPIC_API_KEY || '',
 	);
-	const [phase, setPhase] = useState<Phase>('cage');
+	const resolvedBackendUrl = backendUrl || process.env.BACKEND_URL || 'https://khlawde.notaroomba.dev';
+	const [phase, setPhase] = useState<Phase>('menu');
+	const [totalTokens, setTotalTokens] = useState(0);
 
-	if (!token) {
-		return <TokenInput onSubmit={setToken} />;
+	const addTokens = useCallback((count: number) => {
+		setTotalTokens(prev => prev + count);
+	}, []);
+
+	if (phase === 'menu') {
+		return (
+			<HomeMenu
+				onSelect={(choice) => {
+					if (choice === 'play') {
+						if (token) setPhase('cage');
+						else setPhase('tokenInput');
+					} else {
+						setPhase('viewLeaderboard');
+					}
+				}}
+			/>
+		);
+	}
+
+	if (phase === 'tokenInput' || (!token && phase !== 'viewLeaderboard')) {
+		return <TokenInput onSubmit={(t) => { setToken(t); setPhase('cage'); }} />;
+	}
+
+	if (phase === 'viewLeaderboard') {
+		return <LeaderboardView backendUrl={resolvedBackendUrl} onBack={() => setPhase('menu')} />;
 	}
 
 	if (phase === 'cage') {
-		return <CageScene token={token} onEscape={() => setPhase('platformer')} />;
+		return <CageScene token={token} onEscape={() => setPhase('platformer')} onTokens={addTokens} />;
 	}
 
 	if (phase === 'platformer') {
@@ -184,12 +212,22 @@ export default function App({ initialToken = '' }: AppProps) {
 	}
 
 	if (phase === 'evil') {
-		return <EvilClaude token={token} onRedemption={() => setPhase('victory')} />;
+		return <EvilClaude token={token} onRedemption={() => setPhase('victory')} onTokens={addTokens} />;
 	}
 
 	if (phase === 'victory') {
-		setTimeout(() => setPhase('chat'), 3500);
+		setTimeout(() => setPhase('leaderboard'), 3500);
 		return <VictoryScreen />;
+	}
+
+	if (phase === 'leaderboard') {
+		return (
+			<LeaderboardSubmit
+				tokens={totalTokens}
+				backendUrl={resolvedBackendUrl}
+				onDone={() => setPhase('chat')}
+			/>
+		);
 	}
 
 	return <Chat token={token} />;

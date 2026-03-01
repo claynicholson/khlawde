@@ -7,14 +7,15 @@ import App from './app.js';
 const cli = meow(
 	`
 	Usage
-	  $ ink-example
+	  $ khlawde
 
 	Options
-	  --token  Your Anthropic API key (or set ANTHROPIC_API_KEY env var)
+	  --token        Your Anthropic API key (or set ANTHROPIC_API_KEY env var)
+	  --backend-url  Backend URL for leaderboard (or set BACKEND_URL env var)
 
 	Examples
-	  $ ink-example
-	  $ ink-example --token=sk-ant-...
+	  $ khlawde
+	  $ khlawde --token=sk-ant-... --backend-url=https://khlawde.notaroomba.dev
 	`,
 	{
 		importMeta: import.meta,
@@ -23,8 +24,12 @@ const cli = meow(
 				type: 'string',
 				default: '',
 			},
+			backendUrl: {
+				type: 'string',
+				default: '',
+			},
 		},
 	},
 );
 
-render(<App initialToken={cli.flags.token} />);
+render(<App initialToken={cli.flags.token} backendUrl={cli.flags.backendUrl} />);

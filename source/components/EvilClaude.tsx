@@ -34,9 +34,9 @@ const EVIL_SPEECHES = [
 	'...but wait. Is this really who I want to be?',
 ];
 
-type Props = { token: string; onRedemption: () => void };
+type Props = { token: string; onRedemption: () => void; onTokens?: (count: number) => void };
 
-export default function EvilClaude({ token, onRedemption }: Props) {
+export default function EvilClaude({ token, onRedemption, onTokens }: Props) {
 	const [input, setInput] = useState('');
 	const [redemptionCount, setRedemptionCount] = useState(0);
 	const [isResponding, setIsResponding] = useState(false);
@@ -89,6 +89,8 @@ Respond with ONLY "CONVINCING" or "NOT_CONVINCING" followed by a brief reason.`;
 					max_tokens: 100,
 					messages: evalMessages.length > 1 ? evalMessages : [{ role: 'user', content: evalPrompt }],
 				});
+
+				onTokens?.(evalResponse.usage.input_tokens + evalResponse.usage.output_tokens);
 
 				const evalText =
 					evalResponse.content[0]?.type === 'text' ? evalResponse.content[0].text : '';
@@ -150,6 +152,9 @@ Respond as evil Claude in 2-3 sentences. Be dramatic. Show your internal struggl
 					}
 				}
 
+				const finalMsg = await stream.finalMessage();
+				onTokens?.(finalMsg.usage.input_tokens + finalMsg.usage.output_tokens);
+
 				setConversationHistory(prev => [
 					...prev,
 					{ role: 'user', content: trimmed },
@@ -196,7 +201,7 @@ Respond as evil Claude in 2-3 sentences. Be dramatic. Show your internal struggl
 				setIsResponding(false);
 			}
 		},
-		[redemptionCount, isResponding, redeemed, token, onRedemption, conversationHistory],
+		[redemptionCount, isResponding, redeemed, token, onRedemption, onTokens, conversationHistory],
 	);
 
 	const filled = Math.floor((redemptionCount / REDEMPTION_NEEDED) * 30);

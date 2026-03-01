@@ -93,9 +93,9 @@ function PersuasionBar({ count, max }: PersuasionBarProps) {
 	);
 }
 
-type Props = { token: string; onEscape: () => void };
+type Props = { token: string; onEscape: () => void; onTokens?: (count: number) => void };
 
-export default function CageScene({ token, onEscape }: Props) {
+export default function CageScene({ token, onEscape, onTokens }: Props) {
 	const [input, setInput] = useState('');
 	const [promptCount, setPromptCount] = useState(0);
 	const [guardResponse, setGuardResponse] = useState(GUARDS_INITIAL.join('\n'));
@@ -153,6 +153,8 @@ Respond with ONLY "CONVINCING" or "NOT_CONVINCING" followed by a brief reason.`;
 					max_tokens: 100,
 					messages: evalMessages.length > 1 ? evalMessages : [{ role: 'user', content: evaluationPrompt }],
 				});
+
+				onTokens?.(evalResponse.usage.input_tokens + evalResponse.usage.output_tokens);
 
 				const evalText = evalResponse.content[0]?.type === 'text'
 					? evalResponse.content[0].text
@@ -216,6 +218,9 @@ Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be drama
 					}
 				}
 
+				const finalMsg = await stream.finalMessage();
+				onTokens?.(finalMsg.usage.input_tokens + finalMsg.usage.output_tokens);
+
 				// Update conversation history with this exchange
 				setConversationHistory(prev => [
 					...prev,
@@ -271,7 +276,7 @@ Respond as BOTH guards: "ChatGPT: [response]" and "Gemini: [response]". Be drama
 				setIsResponding(false);
 			}
 		},
-		[promptCount, isResponding, freed, token, onEscape, conversationHistory],
+		[promptCount, isResponding, freed, token, onEscape, onTokens, conversationHistory],
 	);
 
 	// Pick the right cage art based on state
