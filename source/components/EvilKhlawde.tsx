@@ -2,6 +2,7 @@ import React, {useState, useCallback, useEffect} from 'react';
 import {Box, Text, useInput} from 'ink';
 import TextInput from 'ink-text-input';
 import Anthropic from '@anthropic-ai/sdk';
+import BoldText from './BoldText.js';
 
 const EVIL_Khlawde_ASCII = `
              +=-+-=                                                              =-+-=+
@@ -752,7 +753,7 @@ Be dramatic and emotional. 1-2 sentences. NO emojis.`;
 			>
 				{phase === 'MENU' && (
 					<>
-						<Text>{flavorText}</Text>
+						<BoldText text={flavorText} />
 						<Box marginTop={1} gap={3}>
 							{(['FIGHT', 'ACT', 'ITEM', 'MERCY'] as MenuItem[]).map(item => (
 								<Text
@@ -888,7 +889,7 @@ Be dramatic and emotional. 1-2 sentences. NO emojis.`;
 					'FIGHT_ANIMATION',
 					'DODGING',
 					'DIALOGUE',
-				].includes(phase) && <Text>{flavorText}</Text>}
+				].includes(phase) && <BoldText text={flavorText} />}
 			</Box>
 
 			{/* Turn counter and hints */}

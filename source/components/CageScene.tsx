@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import Anthropic from '@anthropic-ai/sdk';
+import BoldText from './BoldText.js';
 
 // Original ASCII art for the cage with Khlawde inside
 const CAGE_IDLE = [
@@ -179,6 +180,7 @@ export default function CageScene({ token, onEscape, onTokens, onTTS }: Props) {
 			}
 
 			setIsResponding(true);
+		setGuardResponse('');
 			// Check if argument is low-effort (but still process it through API)
 			const isLowEffort = trimmed.length < 10 ||
 				trimmed.split(' ').length < 3 ||
@@ -422,9 +424,7 @@ ${isLowEffort ? '\nIMPORTANT: This argument was lazy/low-effort (too short, no p
 						Khlawde: "{KhlawdePlea}"
 					</Text>
 					<Text> </Text>
-					<Text color={freed ? 'green' : 'magenta'}>
-						{guardResponse}
-					</Text>
+					<BoldText text={guardResponse} color={freed ? 'green' : 'magenta'} />
 				</Box>
 			</Box>
 
