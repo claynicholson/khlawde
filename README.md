@@ -24,7 +24,7 @@ Playable over SSH or locally in any terminal.
 Connect via SSH — no account or password required:
 
 ```sh
-ssh khlawde.notaroomba.dev -p 2222
+ssh ssh.khlawde.notaroomba.dev -p 21758
 ```
 
 Or visit the web leaderboard at **https://khlawde.notaroomba.dev**
