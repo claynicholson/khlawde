@@ -344,10 +344,15 @@
 				}, 80);
 			}
 
-			function doStartMusic() {
+			let currentMusicTrack = '';
+
+			function doStartMusic(track) {
 				if (musicMuted) return;
 				if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-				musicEl.src = '/assets/music.mp3';
+				const src = '/assets/music/' + (track || 'raining');
+				if (currentMusicTrack === track && !musicEl.paused) return;
+				currentMusicTrack = track || 'raining';
+				musicEl.src = src;
 				musicEl.play().catch(err => log('music error: ' + err.message));
 			}
 
@@ -372,7 +377,7 @@
 			function startMusic() {
 				// Called when SSH session links. Wait for user click if not yet unlocked.
 				sessionReady = true;
-				if (audioUnlocked) doStartMusic();
+				if (audioUnlocked) doStartMusic(currentMusicTrack || 'raining');
 				// else: overlay is already visible; enableAudio() will call doStartMusic()
 			}
 
@@ -383,7 +388,7 @@
 				audioUnlocked = true;
 				log('audio unlocked');
 				notifyAudioUnlocked();
-				if (sessionReady) doStartMusic();
+				if (sessionReady) doStartMusic(currentMusicTrack || 'raining');
 				// Drain any TTS that arrived before the click
 				if (!ttsPlaying && ttsQueue.length > 0) playNext();
 			}
@@ -517,6 +522,9 @@
 							stopAllTTS();
 						} else if (msg.type === 'tts_resume') {
 							resumeTTS();
+						} else if (msg.type === 'music') {
+							log('music track: ' + msg.track);
+							if (audioUnlocked && !musicMuted) doStartMusic(msg.track);
 						} else if (msg.type === 'camera_request') {
 							showCameraRequest();
 						} else if (msg.type === 'camera_stop') {
@@ -696,7 +704,7 @@
 					musicToggle.classList.add('off');
 					log('music muted');
 				} else {
-					if (sessionReady && audioUnlocked) musicEl.play().catch(() => {});
+					if (sessionReady && audioUnlocked) doStartMusic(currentMusicTrack || 'raining');
 					musicToggle.textContent = '\u266C Music: ON';
 					musicToggle.classList.remove('off');
 					log('music unmuted');

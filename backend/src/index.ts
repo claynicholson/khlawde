@@ -95,6 +95,17 @@ app.post('/tts-stop', (req, res) => {
 	res.json({ok: true});
 });
 
+// CLI tells the browser to switch music track
+app.post('/push-music', (req, res) => {
+	const {code, track} = req.body as {code: string; track: string};
+	const session = sessions.get(code);
+	if (session?.browserWs?.readyState === 1) {
+		session.browserWs.send(JSON.stringify({type: 'music', track}));
+	}
+
+	res.json({ok: true});
+});
+
 // CLI tells the browser to resume accepting TTS
 app.post('/tts-resume', (req, res) => {
 	const {code} = req.body as {code: string};
@@ -202,17 +213,32 @@ app.get('/connect', (_req, res) => {
 	res.sendFile(path.join(frontendPath, 'connect.html'));
 });
 
-// Music asset served from the SSH server's assets directory
-const MUSIC_PATH = path.resolve(__dirname, '../../source/assets/Spear of Justice.mp3');
-app.get('/assets/music.mp3', (_req, res) => {
-	if (!existsSync(MUSIC_PATH)) {
+// Music assets served from the SSH server's assets directory
+const MUSIC_ASSETS_DIR = path.resolve(__dirname, '../../source/assets');
+const MUSIC_TRACK_FILES: Record<string, string> = {
+	raining:     "It's Raining Somewhere Else.mp3",
+	bringItIn:   'Bring It In, Guys!.mp3',
+	megalovania: 'MEGALOVANIA.mp3',
+	spear:       'Spear of Justice.mp3',
+	spiderDance: 'Spider Dance.mp3',
+};
+
+app.get('/assets/music/:track', (req, res) => {
+	const file = MUSIC_TRACK_FILES[req.params['track'] ?? ''];
+	if (!file) {
+		res.status(404).end('Not found');
+		return;
+	}
+
+	const filePath = path.join(MUSIC_ASSETS_DIR, file);
+	if (!existsSync(filePath)) {
 		res.status(404).end('Not found');
 		return;
 	}
 
 	res.setHeader('Content-Type', 'audio/mpeg');
 	res.setHeader('Cache-Control', 'public, max-age=86400');
-	createReadStream(MUSIC_PATH).pipe(res);
+	createReadStream(filePath).pipe(res);
 });
 
 // ─── HTTP + WebSocket server ──────────────────────────────────────────────────

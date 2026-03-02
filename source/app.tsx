@@ -10,6 +10,22 @@ import PhotoBooth from './components/PhotoBooth.js';
 import LeaderboardSubmit from './components/LeaderboardSubmit.js';
 import HomeMenu from './components/HomeMenu.js';
 import {playTrack, PHASE_MUSIC} from './utils/music.js';
+
+const PHASE_TRACK_KEYS: Record<string, string> = {
+	menu:            'raining',
+	viewLeaderboard: 'raining',
+	tokenInput:      'raining',
+	audioSetup:      'raining',
+	cage:            'bringItIn',
+	story1:          'bringItIn',
+	platformer:      'spiderDance',
+	story2:          'megalovania',
+	evil:            'megalovania',
+	victory:         'spear',
+	photo:           'spear',
+	leaderboard:     'spear',
+	chat:            'spear',
+};
 import LeaderboardView from './components/LeaderboardView.js';
 import StoryInterstitial from './components/StoryInterstitial.js';
 import AudioSetup from './components/AudioSetup.js';
@@ -106,6 +122,14 @@ export default function App({initialToken = '', backendUrl = ''}: AppProps) {
 	useEffect(() => {
 		const track = PHASE_MUSIC[phase];
 		if (track) playTrack(track);
+		const trackKey = PHASE_TRACK_KEYS[phase];
+		if (trackKey && audioCode) {
+			fetch(`http://localhost:${audioPort}/push-music`, {
+				method: 'POST',
+				headers: {'Content-Type': 'application/json'},
+				body: JSON.stringify({code: audioCode, track: trackKey}),
+			}).catch(() => {});
+		}
 	}, [phase]);
 
 	const addTokens = useCallback((count: number) => {
